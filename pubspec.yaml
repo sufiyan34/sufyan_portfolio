@@ -65,6 +65,15 @@ dependencies:
   firebase_auth: ^6.7.0
   flutter_image_compress: ^2.5.1
   flutter_animate: ^4.5.2
+  desktop_drop: ^0.8.4
+  pasteboard: ^0.5.0
+  seo: ^0.0.10
+  rive: ^0.14.11
+  visibility_detector: ^0.4.0+2
+  internet_connection_checker_plus: ^3.1.2
+  skeletonizer: ^3.0.0
+  mailto: ^2.0.0
+  flutter_email_sender: ^10.0.1
   
 
 dev_dependencies:

@@ -1,11 +1,29 @@
+import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sufyan_portfolio/splash_screen.dart';
+import 'package:get/get.dart';
 
-void main() {
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sufyan_portfolio/constant/app_routes.dart';
+import 'package:sufyan_portfolio/constant/get_app_routes.dart';
+import 'package:sufyan_portfolio/firebase_options.dart';
+import 'package:seo/seo.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // firebase_options.dart is still the placeholder stub until
+    // `flutterfire configure` is run, so this is expected to fail until
+    // then. The app still boots with static/fallback content.
+    debugPrint('Firebase init skipped/failed: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -34,8 +52,10 @@ class MyApp extends StatelessWidget {
 
             useMaterial3: true,
           ),
-
-          home: const SplashScreen(),
+          defaultTransition: Transition.fadeIn,
+          transitionDuration: const Duration(milliseconds: 300),
+          initialRoute: AppRoutes.splash,
+          getPages: GetAppRoutes.pages,
         );
       },
     );

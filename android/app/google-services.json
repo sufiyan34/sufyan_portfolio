@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "296301407702",
+    "firebase_url": "https://sufyan-portfolio-79a11-default-rtdb.firebaseio.com",
+    "project_id": "sufyan-portfolio-79a11",
+    "storage_bucket": "sufyan-portfolio-79a11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296301407702:android:f8d9a85ed1f6dce8d44877",
+        "android_client_info": {
+          "package_name": "com.example.sufyan_portfolio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxDn_tZqb_r8NEVXqjQCrLlUQqfyn2EWM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

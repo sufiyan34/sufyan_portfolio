@@ -23,6 +23,8 @@ class AppRoutes {
 
   static const skills = '/skills';
 
+  static const experience = '/experience';
+
   static const projects = '/projects';
 
   static const projectDetails = '/project-details';
@@ -72,6 +74,8 @@ class AppRoutes {
 
   // Skills
   static const skillManagement = '/admin/skills';
+
+  static const experienceManagement = '/admin/experience';
 
   static const addSkill = '/admin/skills/add';
 
