@@ -1,3 +1,5 @@
+import 'package:sufyan_portfolio/constant/app_images.dart';
+
 /// Mirrors the `homeContent/` node in FIREBASE_DATA_STRUCTURE.md section 8.
 class HomeContentModel {
   final String eyebrow;
@@ -40,7 +42,7 @@ class HomeContentModel {
     primaryButtonRoute: '/hire-us',
     secondaryButtonText: 'View My Work',
     secondaryButtonRoute: '/projects',
-    heroImageUrl: '',
+    heroImageUrl: AppImages.heroImage,
     heroVideoUrl: '',
     updatedAt: 0,
   );

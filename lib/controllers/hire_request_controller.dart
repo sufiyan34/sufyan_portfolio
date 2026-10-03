@@ -91,17 +91,30 @@ class HireRequestController extends GetxController {
     loadOptions();
   }
 
+  /// The package the visitor picked (null when none / custom). Reading this
+  /// inside an Obx rebuilds the UI when the selection or package list changes.
+  PackageModel? get selectedPackage => _findPackage(selectedPackageId.value);
+
+  void clearPackage() => selectedPackageId.value = '';
+
   void _readArguments() {
     final raw = Get.arguments;
 
     if (raw is Map) {
       selectedPackageId.value = raw['packageId']?.toString() ?? '';
       selectedServiceId.value = raw['serviceId']?.toString() ?? '';
-      return;
+    } else if (raw is String && raw.trim().isNotEmpty) {
+      selectedPackageId.value = raw.trim();
     }
 
-    if (raw is String && raw.trim().isNotEmpty) {
-      selectedPackageId.value = raw.trim();
+    // Fallback for page refresh / shared links: /hire-us?packageId=abc
+    // (Get.arguments is lost on a browser refresh, the query string is not).
+    final params = Get.parameters;
+    if (selectedPackageId.value.isEmpty) {
+      selectedPackageId.value = params['packageId']?.trim() ?? '';
+    }
+    if (selectedServiceId.value.isEmpty) {
+      selectedServiceId.value = params['serviceId']?.trim() ?? '';
     }
   }
 
@@ -195,10 +208,7 @@ class HireRequestController extends GetxController {
 
       Get.offNamed(
         AppRoutes.requestSuccess,
-        arguments: {
-          'requestId': requestId,
-          'projectName': request.projectName,
-        },
+        arguments: {'requestId': requestId, 'projectName': request.projectName},
       );
     } catch (_) {
       errorMessage.value =

@@ -7,6 +7,7 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/hire_request_controller.dart';
+import 'package:sufyan_portfolio/models/package_model.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 
 class HireUsScreen extends StatelessWidget {
@@ -40,7 +41,9 @@ class HireUsScreen extends StatelessWidget {
                       .animate()
                       .fadeIn(duration: 450.ms)
                       .slideY(begin: 0.03),
-                  SizedBox(height: 34.h),
+                  SizedBox(height: 26.h),
+                  _SelectedPackageBanner(controller: controller),
+                  SizedBox(height: 26.h),
                   if (desktop)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,8 +224,6 @@ class _ProjectBrief extends StatelessWidget {
               ],
             ),
           ),
-          if (controller.selectedPackageId.value.isNotEmpty)
-            const SizedBox.shrink(),
         ],
       ),
     );
@@ -392,40 +393,32 @@ class _RequestForm extends StatelessWidget {
           }),
           SizedBox(height: 15.h),
           _FieldRow(
-            first: Obx(
-              () => _ResponsiveDropdown(
-                label: 'Budget range *',
-                value: controller.selectedBudget,
-                items: HireRequestController.budgetRanges,
-                onChanged: controller.selectBudget,
-              ),
+            first: _ResponsiveDropdown(
+              label: 'Budget range *',
+              value: controller.selectedBudget,
+              items: HireRequestController.budgetRanges,
+              onChanged: controller.selectBudget,
             ),
-            second: Obx(
-              () => _ResponsiveDropdown(
-                label: 'Timeline *',
-                value: controller.selectedTimeline,
-                items: HireRequestController.timelines,
-                onChanged: controller.selectTimeline,
-              ),
+            second: _ResponsiveDropdown(
+              label: 'Timeline *',
+              value: controller.selectedTimeline,
+              items: HireRequestController.timelines,
+              onChanged: controller.selectTimeline,
             ),
           ),
           SizedBox(height: 15.h),
           _FieldRow(
-            first: Obx(
-              () => _ResponsiveDropdown(
-                label: 'Preferred platform *',
-                value: controller.selectedPlatform,
-                items: HireRequestController.platforms,
-                onChanged: controller.selectPlatform,
-              ),
+            first: _ResponsiveDropdown(
+              label: 'Preferred platform *',
+              value: controller.selectedPlatform,
+              items: HireRequestController.platforms,
+              onChanged: controller.selectPlatform,
             ),
-            second: Obx(
-              () => _ResponsiveDropdown(
-                label: 'Preferred contact',
-                value: controller.selectedContactMethod,
-                items: HireRequestController.contactMethods,
-                onChanged: controller.selectContactMethod,
-              ),
+            second: _ResponsiveDropdown(
+              label: 'Preferred contact',
+              value: controller.selectedContactMethod,
+              items: HireRequestController.contactMethods,
+              onChanged: controller.selectContactMethod,
             ),
           ),
           SizedBox(height: 15.h),
@@ -702,5 +695,401 @@ class _ResponsiveDropdown extends StatelessWidget {
         ],
       );
     });
+  }
+}
+
+// ===========================================================================
+// Selected package banner
+// ===========================================================================
+
+class _TierStyle {
+  final Color background;
+  final Color backgroundAlt;
+  final Color border;
+  final Color foreground;
+  final Color secondary;
+  final Color accent;
+  final Color onAccent;
+  final IconData icon;
+
+  const _TierStyle({
+    required this.background,
+    required this.backgroundAlt,
+    required this.border,
+    required this.foreground,
+    required this.secondary,
+    required this.accent,
+    required this.onAccent,
+    required this.icon,
+  });
+
+  static const _ink = Color(0xFF111413);
+
+  static _TierStyle of(String type) {
+    switch (PackageTypes.normalize(type)) {
+      case PackageTypes.gold:
+        return _TierStyle(
+          background: AppColors.accentGoldSoft,
+          backgroundAlt: const Color(0xFFEBD28F),
+          border: AppColors.primary,
+          foreground: AppColors.textPrimary,
+          secondary: AppColors.textPrimary.withValues(alpha: 0.72),
+          accent: AppColors.primary,
+          onAccent: Colors.white,
+          icon: Icons.star_rounded,
+        );
+      case PackageTypes.platinum:
+        return _TierStyle(
+          background: AppColors.primary,
+          backgroundAlt: AppColors.primaryDark,
+          border: AppColors.accentGold,
+          foreground: Colors.white,
+          secondary: Colors.white.withValues(alpha: 0.76),
+          accent: AppColors.accentGold,
+          onAccent: AppColors.textPrimary,
+          icon: Icons.diamond_rounded,
+        );
+      case PackageTypes.custom:
+        return _TierStyle(
+          background: _ink,
+          backgroundAlt: const Color(0xFF1E2523),
+          border: const Color(0xFF3FB68B),
+          foreground: Colors.white,
+          secondary: Colors.white.withValues(alpha: 0.72),
+          accent: const Color(0xFF3FB68B),
+          onAccent: _ink,
+          icon: Icons.tune_rounded,
+        );
+      case PackageTypes.silver:
+      default:
+        return _TierStyle(
+          background: const Color(0xFFFBFAF6),
+          backgroundAlt: const Color(0xFFE9EAE6),
+          border: _ink,
+          foreground: AppColors.textPrimary,
+          secondary: AppColors.textSecondary,
+          accent: _ink,
+          onAccent: Colors.white,
+          icon: Icons.workspace_premium_rounded,
+        );
+    }
+  }
+}
+
+/// Shows which package the visitor chose on the Packages page, or a hint to
+/// pick one when nothing is selected.
+class _SelectedPackageBanner extends StatelessWidget {
+  final HireRequestController controller;
+
+  const _SelectedPackageBanner({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final id = controller.selectedPackageId.value;
+      final loading = controller.isLoadingOptions.value;
+      final package = controller.selectedPackage;
+
+      Widget child;
+      if (package != null) {
+        child = _selected(context, package);
+      } else if (id.isNotEmpty && loading) {
+        child = _info(
+          icon: Icons.hourglass_top_rounded,
+          title: 'Loading your selected package…',
+          subtitle: 'Just a moment.',
+        );
+      } else {
+        child = _info(
+          icon: Icons.inventory_2_outlined,
+          title: 'No package selected',
+          subtitle: 'Pick a package for a defined scope, or continue with a custom brief below.',
+          action: 'Browse packages',
+          onAction: () => Get.toNamed(AppRoutes.packages),
+        );
+      }
+
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 350),
+        switchInCurve: Curves.easeOutBack,
+        transitionBuilder: (c, a) => FadeTransition(
+          opacity: a,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.97, end: 1.0).animate(a),
+            child: c,
+          ),
+        ),
+        child: KeyedSubtree(
+          key: ValueKey('$id-${package != null}-$loading'),
+          child: child,
+        ),
+      );
+    });
+  }
+
+  Widget _info({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? action,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 18.h),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: AppColors.border, width: 1.4),
+      ),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 14.w,
+        runSpacing: 10.h,
+        children: [
+          Icon(icon, size: 24.sp, color: AppColors.primary),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 620.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.bodyMedium().copyWith(fontSize: 14.sp),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.small(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          if (action != null)
+            OutlinedButton(
+              onPressed: onAction,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary, width: 1.6),
+                shape: const StadiumBorder(),
+              ),
+              child: Text(action),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _selected(BuildContext context, PackageModel package) {
+    final tier = _TierStyle.of(package.type);
+    final type = PackageTypes.normalize(package.type);
+    final compact = MediaQuery.sizeOf(context).width < 900;
+    final borderWidth = 4.5.w;
+
+    final priceText = (type == PackageTypes.custom && package.price <= 0)
+        ? 'Custom quote'
+        : '${_price(package.price)} ${package.currency.toUpperCase()}';
+
+    final summary = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 44.w,
+              height: 44.w,
+              decoration: BoxDecoration(
+                color: tier.accent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(tier.icon, color: tier.onAccent, size: 22.sp),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SELECTED PACKAGE · ${PackageTypes.label(type).toUpperCase()}',
+                    style: AppTextStyles.overline(
+                      color: tier.accent,
+                    ).copyWith(fontSize: 10.5.sp, fontWeight: FontWeight.w900),
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    package.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.h3(color: tier.foreground)
+                        .copyWith(fontSize: 22.sp),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12.h),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: [
+            _pill(tier, Icons.payments_rounded, priceText),
+            _pill(
+              tier,
+              Icons.schedule_rounded,
+              package.deliveryDays <= 0
+                  ? 'Timeline discussed'
+                  : '${package.deliveryDays} day delivery',
+            ),
+            _pill(
+              tier,
+              Icons.refresh_rounded,
+              package.revisions <= 0
+                  ? 'Revisions discussed'
+                  : '${package.revisions} revisions',
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final features = package.features.take(4).toList();
+    final featureList = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final feature in features)
+          Padding(
+            padding: EdgeInsets.only(bottom: 6.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.check_circle_rounded,
+                  size: 16.sp,
+                  color: tier.accent,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    feature,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.small(color: tier.foreground)
+                        .copyWith(fontSize: 12.sp, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+
+    final actions = Wrap(
+      spacing: 10.w,
+      runSpacing: 8.h,
+      children: [
+        OutlinedButton.icon(
+          onPressed: () => Get.toNamed(AppRoutes.packages),
+          icon: Icon(Icons.swap_horiz_rounded, size: 17.sp),
+          label: const Text('Change'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: tier.foreground,
+            side: BorderSide(color: tier.accent, width: 1.8),
+            shape: const StadiumBorder(),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: controller.clearPackage,
+          icon: Icon(Icons.close_rounded, size: 17.sp),
+          label: const Text('Remove'),
+          style: TextButton.styleFrom(foregroundColor: tier.secondary),
+        ),
+      ],
+    );
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(38.r),
+          bottomRight: Radius.circular(38.r),
+          topRight: Radius.circular(8.r),
+          bottomLeft: Radius.circular(8.r),
+        ),
+        border: Border.all(color: tier.border, width: borderWidth),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [tier.background, tier.backgroundAlt],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: tier.border.withValues(alpha: 0.28),
+            blurRadius: 26,
+            offset: const Offset(6, 12),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.fromLTRB(26.w, 22.h, 24.w, 18.h),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                summary,
+                if (features.isNotEmpty) ...[
+                  SizedBox(height: 14.h),
+                  featureList,
+                ],
+                SizedBox(height: 8.h),
+                actions,
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 5, child: summary),
+                if (features.isNotEmpty) ...[
+                  SizedBox(width: 28.w),
+                  Expanded(flex: 4, child: featureList),
+                ],
+                SizedBox(width: 20.w),
+                actions,
+              ],
+            ),
+    );
+  }
+
+  Widget _pill(_TierStyle tier, IconData icon, String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: tier.foreground.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: tier.accent.withValues(alpha: 0.7),
+          width: 1.3,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14.sp, color: tier.accent),
+          SizedBox(width: 6.w),
+          Text(
+            label,
+            style: AppTextStyles.small(color: tier.foreground)
+                .copyWith(fontSize: 11.5.sp, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _price(double value) {
+    if (value % 1 == 0) return value.toInt().toString();
+    return value
+        .toStringAsFixed(2)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 }

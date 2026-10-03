@@ -39,6 +39,16 @@ class ServiceRepository {
     return service.copyWith(id: id);
   }
 
+  /// Writes a deterministic demo/seed record at the service's existing id.
+  /// Running the test-data seeder again updates the same demo records instead
+  /// of creating duplicate Firebase push-key records.
+  Future<void> seed(ServiceModel service) async {
+    final map = service.toMap();
+    map['createdAt'] = _db.serverTimestamp;
+    map['updatedAt'] = _db.serverTimestamp;
+    await _db.set('$_path/${service.id}', map);
+  }
+
   Future<void> update(ServiceModel service) {
     final map = service.toMap();
     map['updatedAt'] = _db.serverTimestamp;

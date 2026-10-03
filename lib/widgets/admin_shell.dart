@@ -79,6 +79,7 @@ class AdminSidebar extends StatelessWidget {
       Iconsax.message_favorite,
     ),
     _AdminNavItem('Media', AppRoutes.mediaManagement, Iconsax.gallery),
+    _AdminNavItem('Test Data', AppRoutes.testData, Iconsax.code_1),
   ];
 
   static const _requestItems = <_AdminNavItem>[

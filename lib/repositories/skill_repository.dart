@@ -39,6 +39,15 @@ class SkillRepository {
     return skill.copyWith(id: id);
   }
 
+  /// Writes a deterministic demo/seed record at the skill's existing id.
+  /// Re-running the developer seed updates the same record instead of creating duplicates.
+  Future<void> seed(SkillModel skill) async {
+    final map = skill.toMap();
+    map['createdAt'] = _db.serverTimestamp;
+    map['updatedAt'] = _db.serverTimestamp;
+    await _db.set('$_path/${skill.id}', map);
+  }
+
   Future<void> update(SkillModel skill) {
     final map = skill.toMap();
     map['updatedAt'] = _db.serverTimestamp;

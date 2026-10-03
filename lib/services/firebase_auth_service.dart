@@ -84,6 +84,63 @@ class FirebaseAuthService {
 
   Future<void> signOut() => _auth.signOut();
 
+  /// Updates the Firebase Auth display name and refreshes the cached user so
+  /// `currentUser.displayName` reflects it immediately.
+  Future<void> updateDisplayName(String displayName) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw AuthException('Your session has expired. Please sign in again.');
+    }
+    try {
+      await user.updateDisplayName(displayName.trim());
+      await user.reload();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_accountMessageForCode(e.code));
+    }
+  }
+
+  /// Changes the signed-in admin's password. Firebase requires a recent
+  /// sign-in for this, so the current password is verified first.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw AuthException('Your session has expired. Please sign in again.');
+    }
+    if (!user.providerData.any((p) => p.providerId == 'password')) {
+      throw AuthException(
+        'This account doesn\u2019t use a password, so there is nothing to change.',
+      );
+    }
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_passwordChangeMessageForCode(e.code));
+    }
+  }
+
+  /// Emails a password-reset link to the signed-in admin's address.
+  Future<void> sendPasswordReset() async {
+    final email = _auth.currentUser?.email;
+    if (email == null || email.isEmpty) {
+      throw AuthException('No email address is linked to this account.');
+    }
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_accountMessageForCode(e.code));
+    }
+  }
+
   /// Loads `users/{uid}` so admin role/access can be validated.
   Future<Map<dynamic, dynamic>?> loadProfile() async {
     final uid = currentUser?.uid;
@@ -107,6 +164,39 @@ class FirebaseAuthService {
         return 'Please enter a valid email address.';
       default:
         return 'Sign-in failed ($code). Please try again.';
+    }
+  }
+
+  String _accountMessageForCode(String code) {
+    switch (code) {
+      case 'requires-recent-login':
+        return 'For security, please sign in again and retry.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait and try again.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection and try again.';
+      case 'user-not-found':
+        return 'No account was found for this email.';
+      default:
+        return 'Something went wrong ($code). Please try again.';
+    }
+  }
+
+  String _passwordChangeMessageForCode(String code) {
+    switch (code) {
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Your current password is incorrect.';
+      case 'weak-password':
+        return 'Choose a stronger password (at least 6 characters).';
+      case 'requires-recent-login':
+        return 'For security, please sign in again and retry.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait and try again.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection and try again.';
+      default:
+        return 'Unable to change the password ($code). Please try again.';
     }
   }
 

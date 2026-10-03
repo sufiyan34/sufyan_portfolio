@@ -1,11 +1,26 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:sufyan_portfolio/constant/app_colors.dart';
+import 'package:sufyan_portfolio/constant/app_images.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 
-/// One nav item shown in [PublicNavbar] and the mobile drawer.
+// -----------------------------------------------------------------------------
+// Sizing note
+//
+// The navbar uses plain logical pixels on purpose (no .w / .h / .sp).
+// ScreenUtil is configured with a 1440x900 design size and `minTextAdapt`,
+// which shrinks anything that uses it on phones — fine for page content, but it
+// makes a navigation bar's tap targets and labels too small to use.
+// -----------------------------------------------------------------------------
+
+const double _kNavHeight = 72;
+const double _kWideBreakpoint = 1120; // inline links + CTA
+const double _kCompactBreakpoint = 720; // logo + menu button only
+
 class _NavItem {
   final String label;
   final String route;
@@ -24,17 +39,36 @@ const List<_NavItem> _kNavItems = [
   _NavItem('Contact', AppRoutes.contactUs),
 ];
 
-/// Public portfolio navigation bar.
+TextStyle _t(
+  double size, {
+  Color color = AppColors.textPrimary,
+  FontWeight weight = FontWeight.w600,
+  double? letterSpacing,
+  double? height,
+}) {
+  return AppTextStyles.bodyMedium(color: color).copyWith(
+    fontSize: size,
+    fontWeight: weight,
+    letterSpacing: letterSpacing,
+    height: height,
+  );
+}
+
+/// Navigates unless we're already on that page. Compared against the real
+/// current route (not `activeRoute`), so pages that borrow another page's
+/// highlight — Consultation highlights "Packages" — can still link to it.
+void _goTo(String route) {
+  if (Get.currentRoute != route) Get.toNamed(route);
+}
+
+/// Public portfolio navigation bar. Drop-in replacement: same constructor,
+/// still used as `Scaffold.appBar`.
 ///
-/// Desktop:
-/// - Minimal MS editorial logo
-/// - Compact navigation
-/// - Active item with small underline
-/// - Rounded "Let's Talk" button
+/// - Wide (>= 1120): monogram + name, centred pill of links, "Let's Talk".
+/// - Medium (720-1120): monogram + name, "Let's Talk", menu button.
+/// - Compact (< 720): monogram (+ name when there's room) and menu button.
 ///
-/// Tablet/mobile:
-/// - Logo + hamburger
-/// - Bottom-sheet navigation
+/// The menu opens as a slide-in panel with large, thumb-friendly rows.
 class PublicNavbar extends StatelessWidget implements PreferredSizeWidget {
   final String activeRoute;
   final VoidCallback? onLetsTalk;
@@ -46,50 +80,128 @@ class PublicNavbar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(68.h);
-
-  bool _isDesktop(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 1000;
-  }
+  Size get preferredSize => const Size.fromHeight(_kNavHeight);
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = _isDesktop(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= _kWideBreakpoint;
+    final compact = width < _kCompactBreakpoint;
+    final showName = width >= 420;
+    final horizontal = wide ? 40.0 : (compact ? 16.0 : 28.0);
 
-    return Container(
-      height: preferredSize.height,
+    void letsTalk() => (onLetsTalk ?? () => _goTo(AppRoutes.hireUs)).call();
+
+    return Material(
       color: AppColors.background,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 28.w : 20.w),
-          child: Row(
-            children: [
-              const _BrandMark(),
-
-              const Spacer(),
-
-              if (isDesktop) ...[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final item in _kNavItems)
-                      _NavLink(
-                        label: item.label,
-                        route: item.route,
-                        active: item.route == activeRoute,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.border)),
+        ),
+        // The Scaffold adds the status-bar inset on top of preferredSize,
+        // so SafeArea keeps the content centred on notched phones.
+        child: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: _kNavHeight,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontal),
+              child: Row(
+                children: [
+                  _Brand(showName: showName),
+                  if (wide) ...[
+                    Expanded(
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: _LinkCapsule(activeRoute: activeRoute),
+                        ),
                       ),
+                    ),
+                    _CtaButton(onTap: letsTalk),
+                  ] else ...[
+                    const Spacer(),
+                    if (!compact) ...[
+                      _CtaButton(onTap: letsTalk),
+                      const SizedBox(width: 10),
+                    ],
+                    _MenuButton(
+                      onTap: () => _openMenu(
+                        context,
+                        activeRoute: activeRoute,
+                        onLetsTalk: letsTalk,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// BRAND
+// =============================================================================
+
+class _Brand extends StatelessWidget {
+  final bool showName;
+
+  const _Brand({required this.showName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Muhammad Sufyan — home',
+      child: InkWell(
+        onTap: () => _goTo(AppRoutes.home),
+        borderRadius: BorderRadius.circular(14),
+        hoverColor: AppColors.primary.withValues(alpha: 0.04),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const _Monogram(),
+              // Container(
+              //   color: Colors.red,
+              //   height: 300,
+              //   child: Image.asset(AppImages.logo),
+              // ),
+              if (showName) ...[
+                const SizedBox(width: 12),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Muhammad Sufyan',
+                      style: _t(
+                        14.5,
+                        weight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Flutter Developer',
+                      style: _t(
+                        11,
+                        color: AppColors.textMuted,
+                        weight: FontWeight.w500,
+                        height: 1.1,
+                      ),
+                    ),
                   ],
                 ),
-
-                SizedBox(width: 14.w),
-
-                _LetsTalkButton(onTap: onLetsTalk),
-              ] else
-                _HamburgerButton(
-                  activeRoute: activeRoute,
-                  onLetsTalk: onLetsTalk,
-                ),
+              ],
             ],
           ),
         ),
@@ -98,46 +210,54 @@ class PublicNavbar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Minimal "MS" editorial-style brand mark.
-///
-/// The reference uses a small plain monogram rather than
-/// a rounded green square.
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
+/// Editorial "MS" mark — a large M with a small raised S and a gold full stop.
+class _Monogram extends StatelessWidget {
+  const _Monogram();
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 32.w,
-      height: 32.w,
+      width: 38,
+      height: 38,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned(
             left: 0,
-            top: 6.h,
+            top: 5,
             child: Text(
               'M',
-              style: AppTextStyles.bodyMedium(color: AppColors.textPrimary)
-                  .copyWith(
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.w800,
-                    height: 1,
-                    letterSpacing: -0.8,
-                  ),
+              style: _t(
+                25,
+                weight: FontWeight.w800,
+                letterSpacing: -1,
+                height: 1,
+              ),
             ),
           ),
           Positioned(
-            left: 14.w,
-            top: 1.h,
+            left: 21,
+            top: 2,
             child: Text(
               'S',
-              style: AppTextStyles.bodyMedium(color: AppColors.textPrimary)
-                  .copyWith(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                  ),
+              style: _t(
+                13,
+                color: AppColors.primary,
+                weight: FontWeight.w800,
+                height: 1,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 31,
+            top: 26,
+            child: Container(
+              width: 5,
+              height: 5,
+              decoration: const BoxDecoration(
+                color: AppColors.accentGold,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
         ],
@@ -146,16 +266,51 @@ class _BrandMark extends StatelessWidget {
   }
 }
 
+// =============================================================================
+// DESKTOP LINKS
+// =============================================================================
+
+class _LinkCapsule extends StatelessWidget {
+  final String activeRoute;
+
+  const _LinkCapsule({required this.activeRoute});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.045),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      // Transparent Material so the links' focus/hover ink draws over the pill.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final item in _kNavItems)
+              _NavLink(item: item, active: item.route == activeRoute),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _NavLink extends StatefulWidget {
-  final String label;
-  final String route;
+  final _NavItem item;
   final bool active;
 
-  const _NavLink({
-    required this.label,
-    required this.route,
-    required this.active,
-  });
+  const _NavLink({required this.item, required this.active});
 
   @override
   State<_NavLink> createState() => _NavLinkState();
@@ -166,59 +321,136 @@ class _NavLinkState extends State<_NavLink> {
 
   @override
   Widget build(BuildContext context) {
-    final highlighted = widget.active || _hovered;
+    final active = widget.active;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) {
-        setState(() {
-          _hovered = true;
-        });
-      },
-      onExit: (_) {
-        setState(() {
-          _hovered = false;
-        });
-      },
-      child: GestureDetector(
-        onTap: () {
-          if (!widget.active) {
-            Get.toNamed(widget.route);
-          }
-        },
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 7.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                widget.label,
-                style:
-                    AppTextStyles.bodyMedium(
-                      color: highlighted
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
-                    ).copyWith(
-                      fontSize: 10.5.sp,
-                      fontWeight: widget.active
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      letterSpacing: -0.05,
-                    ),
-              ),
+    return Semantics(
+      button: true,
+      selected: active,
+      label: widget.item.label,
+      child: InkWell(
+        onTap: () => _goTo(widget.item.route),
+        onHover: (value) => setState(() => _hovered = value),
+        borderRadius: BorderRadius.circular(999),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        focusColor: AppColors.primary.withValues(alpha: 0.08),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          decoration: BoxDecoration(
+            color: active
+                ? AppColors.primarySoft
+                : (_hovered ? AppColors.surfaceSoft : Colors.transparent),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            widget.item.label,
+            style: _t(
+              13,
+              color: active
+                  ? AppColors.primary
+                  : (_hovered
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary),
+              weight: active ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-              SizedBox(height: 5.h),
+// =============================================================================
+// CTA + MENU BUTTON
+// =============================================================================
 
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                width: widget.active ? 14.w : 0,
-                height: 1.5.h,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20.r),
+class _CtaButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final bool expanded;
+
+  const _CtaButton({required this.onTap, this.expanded = false});
+
+  @override
+  State<_CtaButton> createState() => _CtaButtonState();
+}
+
+class _CtaButtonState extends State<_CtaButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = Text(
+      "Let's Talk",
+      style: _t(13.5, color: AppColors.textOnPrimary, weight: FontWeight.w700),
+    );
+
+    final arrow = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: AppColors.accentGold,
+        shape: BoxShape.circle,
+        boxShadow: _hovered
+            ? [
+                BoxShadow(
+                  color: AppColors.accentGold.withValues(alpha: 0.45),
+                  blurRadius: 10,
                 ),
+              ]
+            : null,
+      ),
+      child: AnimatedRotation(
+        turns: _hovered ? 0.0 : -0.02,
+        duration: const Duration(milliseconds: 180),
+        child: const Icon(
+          Icons.arrow_outward_rounded,
+          size: 17,
+          color: AppColors.primaryDark,
+        ),
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      label: "Let's Talk",
+      child: InkWell(
+        onTap: widget.onTap,
+        onHover: (value) => setState(() => _hovered = value),
+        borderRadius: BorderRadius.circular(999),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          height: 46,
+          padding: const EdgeInsets.fromLTRB(22, 0, 7, 0),
+          decoration: BoxDecoration(
+            color: _hovered ? AppColors.primaryDark : AppColors.primary,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(
+                  alpha: _hovered ? 0.22 : 0.10,
+                ),
+                blurRadius: _hovered ? 16 : 10,
+                offset: const Offset(0, 5),
               ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: widget.expanded ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisAlignment: widget.expanded
+                ? MainAxisAlignment.spaceBetween
+                : MainAxisAlignment.start,
+            children: [
+              label,
+              if (!widget.expanded) const SizedBox(width: 14),
+              arrow,
             ],
           ),
         ),
@@ -227,57 +459,36 @@ class _NavLinkState extends State<_NavLink> {
   }
 }
 
-class _LetsTalkButton extends StatefulWidget {
-  final VoidCallback? onTap;
+class _MenuButton extends StatelessWidget {
+  final VoidCallback onTap;
 
-  const _LetsTalkButton({this.onTap});
-
-  @override
-  State<_LetsTalkButton> createState() => _LetsTalkButtonState();
-}
-
-class _LetsTalkButtonState extends State<_LetsTalkButton> {
-  bool _hovered = false;
+  const _MenuButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) {
-        setState(() {
-          _hovered = true;
-        });
-      },
-      onExit: (_) {
-        setState(() {
-          _hovered = false;
-        });
-      },
-      child: GestureDetector(
-        onTap: widget.onTap ?? () => Get.toNamed(AppRoutes.hireUs),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOut,
-          height: 34.h,
-          padding: EdgeInsets.symmetric(horizontal: 15.w),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(999.r),
-            boxShadow: _hovered
-                ? [
-                    BoxShadow(
-                      blurRadius: 10.r,
-                      offset: Offset(0, 4.h),
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            "Let's Talk",
-            style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary)
-                .copyWith(fontSize: 10.5.sp, fontWeight: FontWeight.w600),
+    return Tooltip(
+      message: 'Open menu',
+      child: Semantics(
+        button: true,
+        label: 'Open menu',
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          splashColor: AppColors.primary.withValues(alpha: 0.08),
+          child: Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Icon(
+              Icons.menu_rounded,
+              size: 22,
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
       ),
@@ -285,114 +496,268 @@ class _LetsTalkButtonState extends State<_LetsTalkButton> {
   }
 }
 
-class _HamburgerButton extends StatelessWidget {
-  final String activeRoute;
-  final VoidCallback? onLetsTalk;
+// =============================================================================
+// MOBILE / TABLET MENU PANEL
+// =============================================================================
 
-  const _HamburgerButton({required this.activeRoute, this.onLetsTalk});
+void _openMenu(
+  BuildContext context, {
+  required String activeRoute,
+  required VoidCallback onLetsTalk,
+}) {
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Close menu',
+    barrierColor: AppColors.primaryDark.withValues(alpha: 0.5),
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (dialogContext, _, __) =>
+        _MenuPanel(activeRoute: activeRoute, onLetsTalk: onLetsTalk),
+    transitionBuilder: (context, animation, _, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      );
+    },
+  );
+}
+
+class _MenuPanel extends StatelessWidget {
+  final String activeRoute;
+  final VoidCallback onLetsTalk;
+
+  const _MenuPanel({required this.activeRoute, required this.onLetsTalk});
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: 'Open menu',
-      splashRadius: 22.r,
-      icon: Icon(Icons.menu_rounded, color: AppColors.textPrimary, size: 24.sp),
-      onPressed: () {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: AppColors.background,
-          isScrollControlled: true,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final panelWidth = math.min(400.0, screenWidth * 0.92);
+
+    void close() => Navigator.of(context).pop();
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.horizontal(left: Radius.circular(28)),
+        child: Material(
+          color: AppColors.background,
+          child: SizedBox(
+            width: panelWidth,
+            height: double.infinity,
+            child: SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 14, 6),
+                    child: Row(
+                      children: [
+                        const _Monogram(),
+                        //Image.asset(AppImages.logo),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Muhammad Sufyan',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _t(
+                              15,
+                              weight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ),
+                        Tooltip(
+                          message: 'Close menu',
+                          child: InkWell(
+                            onTap: close,
+                            customBorder: const CircleBorder(),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 22,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Divider(height: 1, color: AppColors.border),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
+                          child: Text(
+                            'MENU',
+                            style: _t(
+                              11,
+                              color: AppColors.textMuted,
+                              weight: FontWeight.w700,
+                              letterSpacing: 1.6,
+                            ),
+                          ),
+                        ),
+                        for (var i = 0; i < _kNavItems.length; i++)
+                          _MenuRow(
+                                index: i + 1,
+                                item: _kNavItems[i],
+                                active: _kNavItems[i].route == activeRoute,
+                                onTap: () {
+                                  close();
+                                  _goTo(_kNavItems[i].route);
+                                },
+                              )
+                              .animate()
+                              .fadeIn(delay: (70 + i * 45).ms, duration: 280.ms)
+                              .slideX(
+                                begin: 0.08,
+                                end: 0,
+                                delay: (70 + i * 45).ms,
+                                duration: 280.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                    child: Column(
+                      children: [
+                        _CtaButton(
+                          expanded: true,
+                          onTap: () {
+                            close();
+                            onLetsTalk();
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 46,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              close();
+                              _goTo(AppRoutes.consultation);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: const BorderSide(color: AppColors.border),
+                              backgroundColor: AppColors.surface,
+                              shape: const StadiumBorder(),
+                              textStyle: _t(13.5, weight: FontWeight.w700),
+                            ),
+                            child: const Text('Book a Consultation'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          builder: (_) {
-            return _MobileNavSheet(
-              activeRoute: activeRoute,
-              onLetsTalk: onLetsTalk,
-            );
-          },
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-class _MobileNavSheet extends StatelessWidget {
-  final String activeRoute;
-  final VoidCallback? onLetsTalk;
+class _MenuRow extends StatelessWidget {
+  final int index;
+  final _NavItem item;
+  final bool active;
+  final VoidCallback onTap;
 
-  const _MobileNavSheet({required this.activeRoute, this.onLetsTalk});
+  const _MenuRow({
+    required this.index,
+    required this.item,
+    required this.active,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 20.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 42.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(99.r),
-                ),
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Semantics(
+        button: true,
+        selected: active,
+        label: item.label,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: active ? AppColors.primarySoft : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
             ),
-
-            SizedBox(height: 14.h),
-
-            for (final item in _kNavItems)
-              ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 4.w),
-                dense: true,
-                visualDensity: const VisualDensity(vertical: -1),
-                title: Text(
-                  item.label,
-                  style:
-                      AppTextStyles.bodyMedium(
-                        color: item.route == activeRoute
-                            ? AppColors.primary
-                            : AppColors.textPrimary,
-                      ).copyWith(
-                        fontSize: 14.sp,
-                        fontWeight: item.route == activeRoute
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 32,
+                  child: Text(
+                    index.toString().padLeft(2, '0'),
+                    style: _t(
+                      12,
+                      color: active
+                          ? AppColors.accentGold
+                          : AppColors.textMuted,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-                trailing: item.route == activeRoute
-                    ? Icon(
-                        Icons.check_rounded,
-                        size: 18.sp,
-                        color: AppColors.primary,
-                      )
-                    : null,
-                onTap: () {
-                  Navigator.of(context).pop();
-
-                  if (item.route != activeRoute) {
-                    Get.toNamed(item.route);
-                  }
-                },
-              ),
-
-            SizedBox(height: 10.h),
-
-            SizedBox(
-              width: double.infinity,
-              child: _LetsTalkButton(
-                onTap: () {
-                  Navigator.of(context).pop();
-
-                  (onLetsTalk ?? () => Get.toNamed(AppRoutes.hireUs)).call();
-                },
-              ),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: _t(
+                      20,
+                      color: active ? AppColors.primary : AppColors.textPrimary,
+                      weight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ),
+                if (active)
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accentGold,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                else
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: AppColors.textMuted,
+                  ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

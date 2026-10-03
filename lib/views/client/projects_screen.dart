@@ -7,6 +7,7 @@ import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/projects_controller.dart';
 import 'package:sufyan_portfolio/models/project_model.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/project_card.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 
@@ -27,69 +28,72 @@ class ProjectsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: const PublicNavbar(activeRoute: AppRoutes.projects),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 48.w : 20.w,
-            vertical: isDesktop ? 64.h : 40.h,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'My Projects',
-                style: AppTextStyles.h1(),
-              ).animate().fadeIn(duration: const Duration(milliseconds: 400)),
-              SizedBox(height: 8.h),
-              Text(
-                'Some of my recent work.',
-                style: AppTextStyles.body(),
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 48.w : 20.w,
+                vertical: isDesktop ? 64.h : 40.h,
               ),
-              SizedBox(height: 28.h),
-              _CategoryFilterRow(controller: controller),
-              SizedBox(height: 28.h),
-              Obx(() {
-                if (controller.isLoading.value) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: 80.h),
-                    child: Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                  );
-                }
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('My Projects', style: AppTextStyles.h1())
+                      .animate()
+                      .fadeIn(duration: const Duration(milliseconds: 400)),
+                  SizedBox(height: 8.h),
+                  Text('Some of my recent work.', style: AppTextStyles.body()),
+                  SizedBox(height: 28.h),
+                  _CategoryFilterRow(controller: controller),
+                  SizedBox(height: 28.h),
+                  Obx(() {
+                    if (controller.isLoading.value) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(vertical: 80.h),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      );
+                    }
 
-                final projects = controller.filteredProjects;
+                    final projects = controller.filteredProjects;
 
-                if (projects.isEmpty) {
-                  return _EmptyState();
-                }
+                    if (projects.isEmpty) {
+                      return _EmptyState();
+                    }
 
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 400.w,
-                    mainAxisSpacing: 24.h,
-                    crossAxisSpacing: 24.w,
-                    childAspectRatio: 0.86,
-                  ),
-                  itemCount: projects.length,
-                  itemBuilder: (context, index) {
-                    final project = projects[index];
-                    return ProjectCard(
-                      project: project,
-                      onTap: () => Get.toNamed(
-                        AppRoutes.projectDetails,
-                        arguments: project.slug,
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 400.w,
+                        mainAxisSpacing: 24.h,
+                        crossAxisSpacing: 24.w,
+                        childAspectRatio: 0.86,
                       ),
-                    ).animate().fadeIn(
-                      delay: Duration(milliseconds: 60 * (index % 6)),
-                      duration: const Duration(milliseconds: 350),
+                      itemCount: projects.length,
+                      itemBuilder: (context, index) {
+                        final project = projects[index];
+                        return ProjectCard(
+                          project: project,
+                          onTap: () => Get.toNamed(
+                            AppRoutes.projectDetails,
+                            arguments: project.slug,
+                          ),
+                        ).animate().fadeIn(
+                          delay: Duration(milliseconds: 60 * (index % 6)),
+                          duration: const Duration(milliseconds: 350),
+                        );
+                      },
                     );
-                  },
-                );
-              }),
-            ],
-          ),
+                  }),
+                ],
+              ),
+            ),
+            AppFooter(),
+          ],
         ),
       ),
     );
@@ -125,7 +129,11 @@ class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -139,12 +147,16 @@ class _FilterChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? AppColors.primary : AppColors.surface,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border,
+            ),
           ),
           child: Text(
             label,
             style: AppTextStyles.bodyMedium(
-              color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
+              color: selected
+                  ? AppColors.textOnPrimary
+                  : AppColors.textSecondary,
             ).copyWith(fontSize: 13.5.sp),
           ),
         ),
@@ -162,7 +174,11 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_open_rounded, size: 48.sp, color: AppColors.textMuted),
+            Icon(
+              Icons.folder_open_rounded,
+              size: 48.sp,
+              color: AppColors.textMuted,
+            ),
             SizedBox(height: 14.h),
             Text('No projects in this category yet', style: AppTextStyles.h3()),
           ],

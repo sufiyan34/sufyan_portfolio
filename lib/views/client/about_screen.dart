@@ -9,6 +9,7 @@ import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/about_controller.dart';
 import 'package:sufyan_portfolio/models/about_content_model.dart';
 import 'package:sufyan_portfolio/widgets/about_skeletons.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -29,18 +30,23 @@ class AboutScreen extends StatelessWidget {
         onRefresh: controller.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 48.w : 20.w,
-              vertical: isDesktop ? 58.h : 36.h,
-            ),
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return const AboutPageSkeleton();
-              }
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 48.w : 20.w,
+                  vertical: isDesktop ? 58.h : 36.h,
+                ),
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const AboutPageSkeleton();
+                  }
 
-              return _AboutContent(controller: controller);
-            }),
+                  return _AboutContent(controller: controller);
+                }),
+              ),
+              AppFooter(),
+            ],
           ),
         ),
       ),
@@ -107,9 +113,10 @@ class _HeroIntro extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(content.eyebrow, style: AppTextStyles.overline())
-            .animate()
-            .fadeIn(duration: 380.ms),
+        Text(
+          content.eyebrow,
+          style: AppTextStyles.overline(),
+        ).animate().fadeIn(duration: 380.ms),
         SizedBox(height: 10.h),
         Text(content.title, style: AppTextStyles.h1())
             .animate()
@@ -118,9 +125,10 @@ class _HeroIntro extends StatelessWidget {
         SizedBox(height: 10.h),
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 760.w),
-          child: Text(content.subtitle, style: AppTextStyles.bodyMedium())
-              .animate()
-              .fadeIn(delay: 120.ms, duration: 420.ms),
+          child: Text(
+            content.subtitle,
+            style: AppTextStyles.bodyMedium(),
+          ).animate().fadeIn(delay: 120.ms, duration: 420.ms),
         ),
       ],
     );
@@ -149,14 +157,17 @@ class _StoryColumn extends StatelessWidget {
           children: content.traits.map(_TraitPill.new).toList(),
         ),
         SizedBox(height: 28.h),
-        _SectionHeading(eyebrow: 'MY JOURNEY', title: 'Experience that keeps moving.'),
+        _SectionHeading(
+          eyebrow: 'MY JOURNEY',
+          title: 'Experience that keeps moving.',
+        ),
         SizedBox(height: 15.h),
         ...content.journey.asMap().entries.map(
-              (entry) => _JourneyItem(
-                item: entry.value,
-                isLast: entry.key == content.journey.length - 1,
-              ),
-            ),
+          (entry) => _JourneyItem(
+            item: entry.value,
+            isLast: entry.key == content.journey.length - 1,
+          ),
+        ),
       ],
     );
   }
@@ -173,7 +184,10 @@ class _SectionHeading extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(eyebrow, style: AppTextStyles.overline().copyWith(fontSize: 11.sp)),
+        Text(
+          eyebrow,
+          style: AppTextStyles.overline().copyWith(fontSize: 11.sp),
+        ),
         SizedBox(height: 7.h),
         Text(title, style: AppTextStyles.h3()),
       ],
@@ -201,9 +215,8 @@ class _TraitPill extends StatelessWidget {
           SizedBox(width: 6.w),
           Text(
             label,
-            style: AppTextStyles.small(color: AppColors.textPrimary).copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.small(color: AppColors.textPrimary)
+                .copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -256,9 +269,8 @@ class _JourneyItem extends StatelessWidget {
                 SizedBox(height: 3.h),
                 Text(
                   item.period,
-                  style: AppTextStyles.small(color: AppColors.primary).copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextStyles.small(color: AppColors.primary)
+                      .copyWith(fontWeight: FontWeight.w700),
                 ),
                 if (item.description.isNotEmpty) ...[
                   SizedBox(height: 5.h),
@@ -277,75 +289,77 @@ class _PortraitCard extends StatelessWidget {
   final AboutContentModel content;
   final String fallbackImageUrl;
 
-  const _PortraitCard({
-    required this.content,
-    required this.fallbackImageUrl,
-  });
+  const _PortraitCard({required this.content, required this.fallbackImageUrl});
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = content.imageUrl.isNotEmpty ? content.imageUrl : fallbackImageUrl;
+    final imageUrl = content.imageUrl.isNotEmpty
+        ? content.imageUrl
+        : fallbackImageUrl;
 
     return Container(
-      padding: EdgeInsets.all(13.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28.r),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.featureShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22.r),
-            child: AspectRatio(
-              aspectRatio: .94,
-              child: imageUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => _imageFallback(),
-                      errorWidget: (_, __, ___) => _imageFallback(),
-                    )
-                  : _imageFallback(),
-            ),
+          padding: EdgeInsets.all(13.w),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(28.r),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppColors.featureShadow,
           ),
-          SizedBox(height: 14.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Muhammad Sufyan',
-                      style: AppTextStyles.h3().copyWith(fontSize: 20.sp),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      content.availabilityLabel,
-                      style: AppTextStyles.small(color: AppColors.primary).copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+              ClipRRect(
+                borderRadius: BorderRadius.circular(22.r),
+                child: AspectRatio(
+                  aspectRatio: .94,
+                  child: imageUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => _imageFallback(),
+                          errorWidget: (_, __, ___) => _imageFallback(),
+                        )
+                      : _imageFallback(),
                 ),
               ),
-              if (content.signature.isNotEmpty)
-                Text(
-                  content.signature,
-                  style: AppTextStyles.h3(color: AppColors.primary).copyWith(
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w600,
+              SizedBox(height: 14.h),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Muhammad Sufyan',
+                          style: AppTextStyles.h3().copyWith(fontSize: 20.sp),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          content.availabilityLabel,
+                          style: AppTextStyles.small(color: AppColors.primary)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  if (content.signature.isNotEmpty)
+                    Text(
+                      content.signature,
+                      style: AppTextStyles.h3(color: AppColors.primary)
+                          .copyWith(
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 180.ms, duration: 500.ms).slideX(begin: .05, end: 0);
+        )
+        .animate()
+        .fadeIn(delay: 180.ms, duration: 500.ms)
+        .slideX(begin: .05, end: 0);
   }
 
   Widget _imageFallback() {
@@ -383,7 +397,10 @@ class _CapabilitiesCard extends StatelessWidget {
             children: [
               Text('WHAT I DO', style: AppTextStyles.overline()),
               SizedBox(height: 7.h),
-              Text('Technical craft, clear communication.', style: AppTextStyles.h3()),
+              Text(
+                'Technical craft, clear communication.',
+                style: AppTextStyles.h3(),
+              ),
               SizedBox(height: 8.h),
               Text(
                 'I combine implementation detail with a practical product perspective, so the final work is easier to use, maintain, and build on.',
@@ -410,7 +427,12 @@ class _CapabilitiesCard extends StatelessWidget {
                     ),
                     SizedBox(width: 10.w),
                     Expanded(
-                      child: Text(capability, style: AppTextStyles.small(color: AppColors.textPrimary)),
+                      child: Text(
+                        capability,
+                        style: AppTextStyles.small(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -421,7 +443,11 @@ class _CapabilitiesCard extends StatelessWidget {
           if (!split) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [intro, SizedBox(height: 22.h), list],
+              children: [
+                intro,
+                SizedBox(height: 22.h),
+                list,
+              ],
             );
           }
 
@@ -457,12 +483,15 @@ class _BottomCta extends StatelessWidget {
               children: [
                 Text(
                   'Let’s build something useful.',
-                  style: AppTextStyles.h3(color: AppColors.textOnPrimary).copyWith(fontSize: 20.sp),
+                  style: AppTextStyles.h3(color: AppColors.textOnPrimary)
+                      .copyWith(fontSize: 20.sp),
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   'Explore my services or take a look at recent work.',
-                  style: AppTextStyles.small(color: AppColors.textOnPrimary.withValues(alpha: .72)),
+                  style: AppTextStyles.small(
+                    color: AppColors.textOnPrimary.withValues(alpha: .72),
+                  ),
                 ),
               ],
             ),
@@ -475,9 +504,14 @@ class _BottomCta extends StatelessWidget {
               foregroundColor: AppColors.textPrimary,
               elevation: 0,
               padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 13.h),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
-            child: Text('View Services', style: AppTextStyles.bodyMedium().copyWith(fontSize: 13.sp)),
+            child: Text(
+              'View Services',
+              style: AppTextStyles.bodyMedium().copyWith(fontSize: 13.sp),
+            ),
           ),
         ],
       ),

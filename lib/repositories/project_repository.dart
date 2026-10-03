@@ -22,10 +22,9 @@ class ProjectRepository {
   /// Admin: every project regardless of published state.
   Future<List<ProjectModel>> getAll() async {
     final data = await _db.readCollectionOnce(_path);
-    final projects = data.entries
-        .map((e) => ProjectModel.fromMap(e.key, e.value))
-        .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final projects =
+        data.entries.map((e) => ProjectModel.fromMap(e.key, e.value)).toList()
+          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return projects;
   }
 
@@ -42,6 +41,16 @@ class ProjectRepository {
     map['updatedAt'] = _db.serverTimestamp;
     final id = await _db.push(_path, map);
     return project.copyWith(id: id);
+  }
+
+  /// Writes a deterministic demo/seed record at the project's existing id.
+  /// Re-running the developer seed updates the same record instead of creating
+  /// duplicate random Firebase push-key records.
+  Future<void> seed(ProjectModel project) async {
+    final map = project.toMap();
+    map['createdAt'] = _db.serverTimestamp;
+    map['updatedAt'] = _db.serverTimestamp;
+    await _db.set('$_path/${project.id}', map);
   }
 
   Future<void> update(ProjectModel project) {

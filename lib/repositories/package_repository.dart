@@ -29,6 +29,16 @@ class PackageRepository {
     return PackageModel.fromMap(id, data);
   }
 
+  /// Writes a deterministic demo/seed record at the package's existing id.
+  /// Unlike [add], this does not generate a random Firebase push key, so the
+  /// test-data page can be safely run again without creating duplicates.
+  Future<void> seed(PackageModel package) async {
+    final map = package.toMap();
+    map['createdAt'] = _db.serverTimestamp;
+    map['updatedAt'] = _db.serverTimestamp;
+    await _db.set('$_path/${package.id}', map);
+  }
+
   Future<PackageModel> add(PackageModel package) async {
     final map = package.toMap();
     map['createdAt'] = _db.serverTimestamp;

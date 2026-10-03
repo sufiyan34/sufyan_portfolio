@@ -6,6 +6,7 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/experience_controller.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/experience_card.dart';
 import 'package:sufyan_portfolio/widgets/experience_skeletons.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
@@ -32,36 +33,44 @@ class ExperienceScreen extends StatelessWidget {
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 42.h),
                 sliver: SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: 1120.w),
-                      child: Obx(() {
-                        if (controller.isLoading.value) {
-                          return const ExperienceClientSkeleton();
-                        }
+                  child: Column(
+                    children: [
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 1120.w),
+                          child: Obx(() {
+                            if (controller.isLoading.value) {
+                              return const ExperienceClientSkeleton();
+                            }
 
-                        if (controller.experiences.isEmpty) {
-                          return const _EmptyExperienceState();
-                        }
+                            if (controller.experiences.isEmpty) {
+                              return const _EmptyExperienceState();
+                            }
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _TimelineIntro(count: controller.experiences.length),
-                            SizedBox(height: 24.h),
-                            ...controller.experiences.asMap().entries.map(
-                              (entry) => ExperienceTimelineCard(
-                                key: ValueKey(entry.value.id),
-                                experience: entry.value,
-                                isLast: entry.key ==
-                                    controller.experiences.length - 1,
-                                index: entry.key,
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _TimelineIntro(
+                                  count: controller.experiences.length,
+                                ),
+                                SizedBox(height: 24.h),
+                                ...controller.experiences.asMap().entries.map(
+                                  (entry) => ExperienceTimelineCard(
+                                    key: ValueKey(entry.value.id),
+                                    experience: entry.value,
+                                    isLast:
+                                        entry.key ==
+                                        controller.experiences.length - 1,
+                                    index: entry.key,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
+                      AppFooter(),
+                    ],
                   ),
                 ),
               ),
@@ -88,7 +97,10 @@ class _PageIntro extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 7.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(999.r),
@@ -102,7 +114,9 @@ class _PageIntro extends StatelessWidget {
                   SizedBox(height: 14.h),
                   Text(
                     'A timeline of the work\nand systems I have built.',
-                    style: AppTextStyles.h1().copyWith(fontSize: compact ? 40.sp : 54.sp),
+                    style: AppTextStyles.h1().copyWith(
+                      fontSize: compact ? 40.sp : 54.sp,
+                    ),
                   ),
                   SizedBox(height: 14.h),
                   ConstrainedBox(
@@ -196,7 +210,10 @@ class _TimelineIntro extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('My Journey', style: AppTextStyles.h2().copyWith(fontSize: 31.sp)),
+              Text(
+                'My Journey',
+                style: AppTextStyles.h2().copyWith(fontSize: 31.sp),
+              ),
               SizedBox(height: 4.h),
               Text(
                 'Experience and growth, one chapter at a time.',

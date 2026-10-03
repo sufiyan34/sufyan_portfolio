@@ -7,6 +7,7 @@ import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/packages_controller.dart';
 import 'package:sufyan_portfolio/models/package_model.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/package_card.dart';
 import 'package:sufyan_portfolio/widgets/package_skeletons.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
@@ -23,70 +24,95 @@ class PackagesScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const PublicNavbar(activeRoute: AppRoutes.packages),
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        backgroundColor: AppColors.surface,
-        onRefresh: controller.loadPackages,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 64.w : 20.w,
-            vertical: isDesktop ? 62.h : 40.h,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 1320.w),
-              child: Obx(() {
-                if (controller.isLoading.value) return const PackagesPageSkeleton();
+      body: ListView(
+        shrinkWrap: true,
+        children: [
+          RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: AppColors.surface,
+            onRefresh: controller.loadPackages,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 64.w : 20.w,
+                vertical: isDesktop ? 62.h : 40.h,
+              ),
+              child: Column(
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: 1320.w),
+                      child: Obx(() {
+                        if (controller.isLoading.value)
+                          return const PackagesPageSkeleton();
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildIntro(),
-                    SizedBox(height: 26.h),
-                    _TypeFilters(controller: controller),
-                    SizedBox(height: 30.h),
-                    if (controller.filteredPackages.isEmpty)
-                      const _EmptyPackagesState()
-                    else
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final columns = constraints.maxWidth >= 1180
-                              ? 4
-                              : constraints.maxWidth >= 760
-                                  ? 2
-                                  : 1;
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: controller.filteredPackages.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: columns,
-                              crossAxisSpacing: 18.w,
-                              mainAxisSpacing: 18.h,
-                              childAspectRatio: columns == 1 ? 0.66 : 0.58,
-                            ),
-                            itemBuilder: (_, index) {
-                              final package = controller.filteredPackages[index];
-                              return PackageCard(package: package)
-                                  .animate()
-                                  .fadeIn(
-                                    delay: Duration(milliseconds: 65 * (index % 6)),
-                                    duration: const Duration(milliseconds: 360),
-                                  )
-                                  .slideY(begin: 0.03, end: 0, curve: Curves.easeOut);
-                            },
-                          );
-                        },
-                      ),
-                    SizedBox(height: 40.h),
-                    _buildCustomCta(),
-                  ],
-                );
-              }),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildIntro(),
+                            SizedBox(height: 26.h),
+                            _TypeFilters(controller: controller),
+                            SizedBox(height: 30.h),
+                            if (controller.filteredPackages.isEmpty)
+                              const _EmptyPackagesState()
+                            else
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final columns = constraints.maxWidth >= 1180
+                                      ? 4
+                                      : constraints.maxWidth >= 760
+                                      ? 2
+                                      : 1;
+                                  return GridView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount:
+                                        controller.filteredPackages.length,
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: columns,
+                                          crossAxisSpacing: 18.w,
+                                          mainAxisSpacing: 18.h,
+                                          childAspectRatio: columns == 1
+                                              ? 0.66
+                                              : 0.58,
+                                        ),
+                                    itemBuilder: (_, index) {
+                                      final package =
+                                          controller.filteredPackages[index];
+                                      return PackageCard(package: package)
+                                          .animate()
+                                          .fadeIn(
+                                            delay: Duration(
+                                              milliseconds: 65 * (index % 6),
+                                            ),
+                                            duration: const Duration(
+                                              milliseconds: 360,
+                                            ),
+                                          )
+                                          .slideY(
+                                            begin: 0.03,
+                                            end: 0,
+                                            curve: Curves.easeOut,
+                                          );
+                                    },
+                                  );
+                                },
+                              ),
+                            SizedBox(height: 40.h),
+                            _buildCustomCta(),
+                          ],
+                        );
+                      }),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+          AppFooter(),
+        ],
       ),
     );
   }
@@ -145,7 +171,8 @@ class PackagesScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Transparent scope, human communication, and room for the technical details that matter.',
-                    style: AppTextStyles.small(color: AppColors.textPrimary).copyWith(height: 1.55),
+                    style: AppTextStyles.small(color: AppColors.textPrimary)
+                        .copyWith(height: 1.55),
                   ),
                 ),
               ],
@@ -155,7 +182,11 @@ class PackagesScreen extends StatelessWidget {
           if (compact) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [copy, SizedBox(height: 20.h), aside],
+              children: [
+                copy,
+                SizedBox(height: 20.h),
+                aside,
+              ],
             );
           }
 
@@ -187,12 +218,16 @@ class PackagesScreen extends StatelessWidget {
               children: [
                 Text(
                   'Need a package that does not fit the tiers?',
-                  style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary).copyWith(fontSize: 15.sp),
+                  style: AppTextStyles.bodyMedium(
+                    color: AppColors.textOnPrimary,
+                  ).copyWith(fontSize: 15.sp),
                 ),
                 SizedBox(height: 3.h),
                 Text(
                   'Let’s shape a custom scope around your actual project requirements.',
-                  style: AppTextStyles.small(color: AppColors.textOnPrimary.withValues(alpha: 0.72)),
+                  style: AppTextStyles.small(
+                    color: AppColors.textOnPrimary.withValues(alpha: 0.72),
+                  ),
                 ),
               ],
             ),
@@ -208,7 +243,8 @@ class PackagesScreen extends StatelessWidget {
               ),
               child: Text(
                 'Request Custom',
-                style: AppTextStyles.bodyMedium(color: AppColors.textPrimary).copyWith(fontSize: 12.5.sp),
+                style: AppTextStyles.bodyMedium(color: AppColors.textPrimary)
+                    .copyWith(fontSize: 12.5.sp),
               ),
             ),
           ),
@@ -231,7 +267,9 @@ class _TypeFilters extends StatelessWidget {
         runSpacing: 9.h,
         children: controller.filters.map((type) {
           final selected = controller.selectedType.value == type;
-          final label = type == kAllPackagesFilter ? 'All Packages' : PackageTypes.label(type);
+          final label = type == kAllPackagesFilter
+              ? 'All Packages'
+              : PackageTypes.label(type);
           return InkWell(
             onTap: () => controller.selectType(type),
             borderRadius: BorderRadius.circular(999),
@@ -248,7 +286,9 @@ class _TypeFilters extends StatelessWidget {
               child: Text(
                 label,
                 style: AppTextStyles.small(
-                  color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
+                  color: selected
+                      ? AppColors.textOnPrimary
+                      : AppColors.textSecondary,
                 ).copyWith(fontSize: 11.8.sp, fontWeight: FontWeight.w700),
               ),
             ),
@@ -274,7 +314,11 @@ class _EmptyPackagesState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.layers_clear_rounded, size: 34.sp, color: AppColors.textMuted),
+          Icon(
+            Icons.layers_clear_rounded,
+            size: 34.sp,
+            color: AppColors.textMuted,
+          ),
           SizedBox(height: 12.h),
           Text('No packages are published yet.', style: AppTextStyles.h3()),
           SizedBox(height: 7.h),

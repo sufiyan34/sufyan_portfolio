@@ -3,12 +3,16 @@ import 'package:get/get_navigation/src/routes/get_route.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/controllers/admin/admin_auth_controller.dart';
+import 'package:sufyan_portfolio/controllers/admin/admin_profile_controller.dart';
 import 'package:sufyan_portfolio/controllers/admin/hire_request_details_controller.dart';
 import 'package:sufyan_portfolio/controllers/admin/admin_route_middleware.dart';
+import 'package:sufyan_portfolio/controllers/admin/test_data_controller.dart';
+import 'package:sufyan_portfolio/controllers/consultation_controller.dart';
 import 'package:sufyan_portfolio/controllers/hire_request_controller.dart';
 import 'package:sufyan_portfolio/splash_screen.dart';
 import 'package:sufyan_portfolio/views/admin/access_denied_screen.dart';
 import 'package:sufyan_portfolio/views/admin/admin_placeholder_screen.dart';
+import 'package:sufyan_portfolio/views/admin/admin_profile_screen.dart';
 import 'package:sufyan_portfolio/views/admin/admin_dashboard_screen.dart';
 import 'package:sufyan_portfolio/views/admin/experience_management_screen.dart';
 import 'package:sufyan_portfolio/views/admin/hire_request_details_screen.dart';
@@ -19,8 +23,10 @@ import 'package:sufyan_portfolio/views/admin/project_management_screen.dart';
 import 'package:sufyan_portfolio/views/admin/service_management_screen.dart';
 import 'package:sufyan_portfolio/views/admin/sign_up_screen.dart';
 import 'package:sufyan_portfolio/views/admin/skill_management_screen.dart';
+import 'package:sufyan_portfolio/views/admin/test_data_screen.dart';
 import 'package:sufyan_portfolio/views/client/about_screen.dart';
 import 'package:sufyan_portfolio/views/client/contact_screen.dart';
+import 'package:sufyan_portfolio/views/client/consultation_screen.dart';
 import 'package:sufyan_portfolio/views/client/experience_screen.dart';
 import 'package:sufyan_portfolio/views/client/home_screen.dart';
 import 'package:sufyan_portfolio/views/client/hire_us_screen.dart';
@@ -84,6 +90,16 @@ class GetAppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<HireRequestController>(
           () => HireRequestController(),
+          fenix: false,
+        );
+      }),
+    ),
+    GetPage(
+      name: AppRoutes.consultation,
+      page: () => const ConsultationScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<ConsultationController>(
+          () => ConsultationController(),
           fenix: false,
         );
       }),
@@ -194,20 +210,36 @@ class GetAppRoutes {
     ),
     GetPage(
       name: AppRoutes.adminProfile,
-      page: () => const AdminPlaceholderScreen(
-        title: 'Profile & Settings',
-        description: 'Manage administrator profile details and workspace preferences here.',
-        icon: Iconsax.profile_2user,
-      ),
+      page: () => const AdminProfileScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<AdminProfileController>(
+          () => AdminProfileController(),
+          fenix: false,
+        );
+      }),
+      middlewares: [AdminRouteMiddleware()],
+    ),
+    // Same page — keeps the older /admin/settings URL from landing on a placeholder.
+    GetPage(
+      name: AppRoutes.adminSettings,
+      page: () => const AdminProfileScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<AdminProfileController>(
+          () => AdminProfileController(),
+          fenix: false,
+        );
+      }),
       middlewares: [AdminRouteMiddleware()],
     ),
     GetPage(
-      name: AppRoutes.adminSettings,
-      page: () => const AdminPlaceholderScreen(
-        title: 'Admin Settings',
-        description: 'Workspace settings and administrative configuration will be managed here.',
-        icon: Iconsax.setting_2,
-      ),
+      name: AppRoutes.testData,
+      page: () => const TestDataScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TestDataController>(
+          () => TestDataController(),
+          fenix: true,
+        );
+      }),
       middlewares: [AdminRouteMiddleware()],
     ),
   ];

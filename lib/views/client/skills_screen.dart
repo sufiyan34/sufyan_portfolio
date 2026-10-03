@@ -6,6 +6,7 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/skills_controller.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 import 'package:sufyan_portfolio/widgets/skill_card.dart';
 import 'package:sufyan_portfolio/widgets/skill_skeletons.dart';
@@ -22,78 +23,93 @@ class SkillsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const PublicNavbar(activeRoute: AppRoutes.skills),
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        backgroundColor: AppColors.surface,
-        onRefresh: controller.loadSkills,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 64.w : 20.w,
-            vertical: isDesktop ? 62.h : 40.h,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 1320.w),
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return const SkillsPageSkeleton();
-                }
+      body: ListView(
+        shrinkWrap: true,
+        children: [
+          RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: AppColors.surface,
+            onRefresh: controller.loadSkills,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 64.w : 20.w,
+                vertical: isDesktop ? 62.h : 40.h,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 1320.w),
+                  child: Obx(() {
+                    if (controller.isLoading.value) {
+                      return const SkillsPageSkeleton();
+                    }
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildIntro()
-                        .animate()
-                        .fadeIn(duration: const Duration(milliseconds: 400))
-                        .slideY(begin: 0.04, end: 0, curve: Curves.easeOut),
-                    SizedBox(height: 28.h),
-                    _CategoryRow(controller: controller),
-                    SizedBox(height: 30.h),
-                    if (controller.filteredSkills.isEmpty)
-                      const _EmptySkillsState()
-                    else
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final columns = constraints.maxWidth >= 1120
-                              ? 3
-                              : constraints.maxWidth >= 700
-                              ? 2
-                              : 1;
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: controller.filteredSkills.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: columns,
-                              crossAxisSpacing: 18.w,
-                              mainAxisSpacing: 18.h,
-                              childAspectRatio: columns == 1 ? 1.5 : 1.28,
-                            ),
-                            itemBuilder: (_, index) {
-                              return SkillCard(skill: controller.filteredSkills[index])
-                                  .animate()
-                                  .fadeIn(
-                                    delay: Duration(milliseconds: 55 * (index % 6)),
-                                    duration: const Duration(milliseconds: 360),
-                                  )
-                                  .slideY(
-                                    begin: 0.03,
-                                    end: 0,
-                                    curve: Curves.easeOut,
-                                  );
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildIntro()
+                            .animate()
+                            .fadeIn(duration: const Duration(milliseconds: 400))
+                            .slideY(begin: 0.04, end: 0, curve: Curves.easeOut),
+                        SizedBox(height: 28.h),
+                        _CategoryRow(controller: controller),
+                        SizedBox(height: 30.h),
+                        if (controller.filteredSkills.isEmpty)
+                          const _EmptySkillsState()
+                        else
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final columns = constraints.maxWidth >= 1120
+                                  ? 3
+                                  : constraints.maxWidth >= 700
+                                  ? 2
+                                  : 1;
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: controller.filteredSkills.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: columns,
+                                      crossAxisSpacing: 18.w,
+                                      mainAxisSpacing: 18.h,
+                                      childAspectRatio: columns == 1
+                                          ? 1.5
+                                          : 1.28,
+                                    ),
+                                itemBuilder: (_, index) {
+                                  return SkillCard(
+                                        skill: controller.filteredSkills[index],
+                                      )
+                                      .animate()
+                                      .fadeIn(
+                                        delay: Duration(
+                                          milliseconds: 55 * (index % 6),
+                                        ),
+                                        duration: const Duration(
+                                          milliseconds: 360,
+                                        ),
+                                      )
+                                      .slideY(
+                                        begin: 0.03,
+                                        end: 0,
+                                        curve: Curves.easeOut,
+                                      );
+                                },
+                              );
                             },
-                          );
-                        },
-                      ),
-                    SizedBox(height: 40.h),
-                    _buildBottomNote(),
-                  ],
-                );
-              }),
+                          ),
+                        SizedBox(height: 40.h),
+                        _buildBottomNote(),
+                      ],
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
-        ),
+          AppFooter(),
+        ],
       ),
     );
   }
@@ -152,9 +168,8 @@ class SkillsScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Clean implementation, thoughtful UX, and maintainable code.',
-                    style: AppTextStyles.small(color: AppColors.textPrimary).copyWith(
-                      height: 1.55,
-                    ),
+                    style: AppTextStyles.small(color: AppColors.textPrimary)
+                        .copyWith(height: 1.55),
                   ),
                 ),
               ],
@@ -164,7 +179,11 @@ class SkillsScreen extends StatelessWidget {
           if (compact) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [copy, SizedBox(height: 20.h), aside],
+              children: [
+                copy,
+                SizedBox(height: 20.h),
+                aside,
+              ],
             );
           }
 
@@ -193,7 +212,8 @@ class SkillsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               'Need a specific stack or capability?',
-              style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary).copyWith(fontSize: 14.sp),
+              style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary)
+                  .copyWith(fontSize: 14.sp),
             ),
           ),
           GestureDetector(
@@ -206,7 +226,8 @@ class SkillsScreen extends StatelessWidget {
               ),
               child: Text(
                 'Let\'s Talk',
-                style: AppTextStyles.bodyMedium(color: AppColors.textPrimary).copyWith(fontSize: 13.sp),
+                style: AppTextStyles.bodyMedium(color: AppColors.textPrimary)
+                    .copyWith(fontSize: 13.sp),
               ),
             ),
           ),
@@ -244,7 +265,11 @@ class _FilterPill extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _FilterPill({required this.label, required this.selected, required this.onTap});
+  const _FilterPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -259,13 +284,17 @@ class _FilterPill extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? AppColors.primary : AppColors.surface,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border,
+            ),
             boxShadow: selected ? AppColors.cardShadow : null,
           ),
           child: Text(
             label,
             style: AppTextStyles.bodyMedium(
-              color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
+              color: selected
+                  ? AppColors.textOnPrimary
+                  : AppColors.textSecondary,
             ).copyWith(fontSize: 13.sp),
           ),
         ),
@@ -289,11 +318,18 @@ class _EmptySkillsState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.auto_awesome_mosaic_outlined, size: 46.sp, color: AppColors.textMuted),
+          Icon(
+            Icons.auto_awesome_mosaic_outlined,
+            size: 46.sp,
+            color: AppColors.textMuted,
+          ),
           SizedBox(height: 14.h),
           Text('Skills will appear here soon.', style: AppTextStyles.h3()),
           SizedBox(height: 6.h),
-          Text('Check another category or refresh the page.', style: AppTextStyles.small()),
+          Text(
+            'Check another category or refresh the page.',
+            style: AppTextStyles.small(),
+          ),
         ],
       ),
     );

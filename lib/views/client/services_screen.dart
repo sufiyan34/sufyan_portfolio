@@ -6,6 +6,7 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/services_controller.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 import 'package:sufyan_portfolio/widgets/service_card.dart';
 import 'package:sufyan_portfolio/widgets/service_icon.dart';
@@ -23,80 +24,99 @@ class ServicesScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const PublicNavbar(activeRoute: AppRoutes.services),
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        backgroundColor: AppColors.surface,
-        onRefresh: controller.loadServices,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 64.w : 20.w,
-            vertical: isDesktop ? 62.h : 40.h,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 1320.w),
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return const ServicesPageSkeleton();
-                }
+      body: ListView(
+        shrinkWrap: true,
+        children: [
+          RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: AppColors.surface,
+            onRefresh: controller.loadServices,
+            child: SingleChildScrollView(
+              physics: NeverScrollableScrollPhysics(),
+              // const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 64.w : 20.w,
+                vertical: isDesktop ? 62.h : 40.h,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 1320.w),
+                  child: Obx(() {
+                    if (controller.isLoading.value) {
+                      return const ServicesPageSkeleton();
+                    }
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildIntro(),
-                    SizedBox(height: 26.h),
-                    _CategoryRow(controller: controller),
-                    SizedBox(height: 30.h),
-                    if (controller.filteredServices.isEmpty)
-                      const _EmptyServicesState()
-                    else
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final columns = constraints.maxWidth >= 1120
-                              ? 3
-                              : constraints.maxWidth >= 700
-                              ? 2
-                              : 1;
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: controller.filteredServices.length,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: columns,
-                                  crossAxisSpacing: 18.w,
-                                  mainAxisSpacing: 18.h,
-                                  childAspectRatio: columns == 1 ? 1.42 : 1.13,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildIntro(),
+                        SizedBox(height: 26.h),
+                        _CategoryRow(controller: controller),
+                        SizedBox(height: 30.h),
+                        if (controller.filteredServices.isEmpty)
+                          const _EmptyServicesState()
+                        else
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final columns = constraints.maxWidth >= 1120
+                                  ? 3
+                                  : constraints.maxWidth >= 700
+                                  ? 2
+                                  : 1;
+
+                              final spacing = 18.w;
+
+                              final cardWidth = columns == 1
+                                  ? constraints.maxWidth
+                                  : (constraints.maxWidth -
+                                            (spacing * (columns - 1))) /
+                                        columns;
+
+                              return Wrap(
+                                spacing: spacing,
+                                runSpacing: 18.h,
+                                children: List.generate(
+                                  controller.filteredServices.length,
+                                  (index) {
+                                    return SizedBox(
+                                      width: cardWidth,
+                                      child:
+                                          ServiceCard(
+                                                service: controller
+                                                    .filteredServices[index],
+                                              )
+                                              .animate()
+                                              .fadeIn(
+                                                delay: Duration(
+                                                  milliseconds:
+                                                      60 * (index % 6),
+                                                ),
+                                                duration: const Duration(
+                                                  milliseconds: 360,
+                                                ),
+                                              )
+                                              .slideY(
+                                                begin: 0.03,
+                                                end: 0,
+                                                curve: Curves.easeOut,
+                                              ),
+                                    );
+                                  },
                                 ),
-                            itemBuilder: (_, index) {
-                              return ServiceCard(
-                                    service: controller.filteredServices[index],
-                                  )
-                                  .animate()
-                                  .fadeIn(
-                                    delay: Duration(
-                                      milliseconds: 60 * (index % 6),
-                                    ),
-                                    duration: const Duration(milliseconds: 360),
-                                  )
-                                  .slideY(
-                                    begin: 0.03,
-                                    end: 0,
-                                    curve: Curves.easeOut,
-                                  );
+                              );
                             },
-                          );
-                        },
-                      ),
-                    SizedBox(height: 40.h),
-                    _buildBottomCta(),
-                  ],
-                );
-              }),
+                          ),
+                        SizedBox(height: 40.h),
+                        _buildBottomCta(),
+                      ],
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
-        ),
+          AppFooter(),
+        ],
       ),
     );
   }

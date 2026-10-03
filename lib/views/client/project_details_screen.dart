@@ -8,6 +8,7 @@ import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/project_details_controller.dart';
 import 'package:sufyan_portfolio/models/project_model.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/project_details_skeletons.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,23 +31,30 @@ class ProjectDetailsScreen extends StatelessWidget {
         onRefresh: controller.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 48.w : 20.w,
-              vertical: isDesktop ? 54.h : 34.h,
-            ),
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return const ProjectDetailsSkeleton();
-              }
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 48.w : 20.w,
+                  vertical: isDesktop ? 54.h : 34.h,
+                ),
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const ProjectDetailsSkeleton();
+                  }
 
-              final project = controller.project.value;
-              if (project == null) {
-                return _NotFoundState(message: controller.errorMessage.value);
-              }
+                  final project = controller.project.value;
+                  if (project == null) {
+                    return _NotFoundState(
+                      message: controller.errorMessage.value,
+                    );
+                  }
 
-              return _ProjectDetailsContent(project: project);
-            }),
+                  return _ProjectDetailsContent(project: project);
+                }),
+              ),
+              AppFooter(),
+            ],
           ),
         ),
       ),
@@ -108,7 +116,11 @@ class _ProjectHero extends StatelessWidget {
         if (!desktop) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [copy, SizedBox(height: 20.h), visual],
+            children: [
+              copy,
+              SizedBox(height: 20.h),
+              visual,
+            ],
           );
         }
 
@@ -134,9 +146,10 @@ class _HeroCopy extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('CASE STUDY', style: AppTextStyles.overline())
-            .animate()
-            .fadeIn(duration: 350.ms),
+        Text(
+          'CASE STUDY',
+          style: AppTextStyles.overline(),
+        ).animate().fadeIn(duration: 350.ms),
         SizedBox(height: 9.h),
         Text(project.title, style: AppTextStyles.h1())
             .animate()
@@ -170,13 +183,23 @@ class _HeroCopy extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: () => _launch(project.liveUrl),
                 icon: Icon(Icons.open_in_new_rounded, size: 16.sp),
-                label: Text('Live Demo', style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary).copyWith(fontSize: 13.sp)),
+                label: Text(
+                  'Live Demo',
+                  style: AppTextStyles.bodyMedium(
+                    color: AppColors.textOnPrimary,
+                  ).copyWith(fontSize: 13.sp),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.textOnPrimary,
                   elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 17.w, vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 17.w,
+                    vertical: 12.h,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
             if (project.liveUrl.isNotEmpty && project.githubUrl.isNotEmpty)
@@ -185,12 +208,21 @@ class _HeroCopy extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => _launch(project.githubUrl),
                 icon: Icon(Icons.code_rounded, size: 16.sp),
-                label: Text('GitHub', style: AppTextStyles.bodyMedium(color: AppColors.primary).copyWith(fontSize: 13.sp)),
+                label: Text(
+                  'GitHub',
+                  style: AppTextStyles.bodyMedium(color: AppColors.primary)
+                      .copyWith(fontSize: 13.sp),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: BorderSide(color: AppColors.border),
-                  padding: EdgeInsets.symmetric(horizontal: 17.w, vertical: 12.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 17.w,
+                    vertical: 12.h,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
           ],
@@ -207,35 +239,42 @@ class _HeroImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(10.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(30.r),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.featureShadow,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(23.r),
-        child: AspectRatio(
-          aspectRatio: 1.28,
-          child: project.coverImageUrl.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: project.coverImageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => _fallback(),
-                  errorWidget: (_, __, ___) => _fallback(),
-                )
-              : _fallback(),
-        ),
-      ),
-    ).animate().fadeIn(delay: 140.ms, duration: 520.ms).slideX(begin: .04, end: 0);
+          padding: EdgeInsets.all(10.w),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(30.r),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppColors.featureShadow,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(23.r),
+            child: AspectRatio(
+              aspectRatio: 1.28,
+              child: project.coverImageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: project.coverImageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => _fallback(),
+                      errorWidget: (_, __, ___) => _fallback(),
+                    )
+                  : _fallback(),
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(delay: 140.ms, duration: 520.ms)
+        .slideX(begin: .04, end: 0);
   }
 
   Widget _fallback() {
     return Container(
       color: AppColors.surfaceSoft,
       alignment: Alignment.center,
-      child: Icon(Icons.image_outlined, color: AppColors.textMuted, size: 48.sp),
+      child: Icon(
+        Icons.image_outlined,
+        color: AppColors.textMuted,
+        size: 48.sp,
+      ),
     );
   }
 }
@@ -254,7 +293,8 @@ class _TechPill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppTextStyles.small(color: AppColors.primary).copyWith(fontWeight: FontWeight.w700),
+        style: AppTextStyles.small(color: AppColors.primary)
+            .copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -277,8 +317,15 @@ class _MetaPill extends StatelessWidget {
       child: RichText(
         text: TextSpan(
           children: [
-            TextSpan(text: '$label  ', style: AppTextStyles.small(color: AppColors.textMuted)),
-            TextSpan(text: value, style: AppTextStyles.small(color: AppColors.textPrimary).copyWith(fontWeight: FontWeight.w700)),
+            TextSpan(
+              text: '$label  ',
+              style: AppTextStyles.small(color: AppColors.textMuted),
+            ),
+            TextSpan(
+              text: value,
+              style: AppTextStyles.small(color: AppColors.textPrimary)
+                  .copyWith(fontWeight: FontWeight.w700),
+            ),
           ],
         ),
       ),
@@ -290,7 +337,11 @@ class _TextSection extends StatelessWidget {
   final String eyebrow;
   final String title;
   final String body;
-  const _TextSection({required this.eyebrow, required this.title, required this.body});
+  const _TextSection({
+    required this.eyebrow,
+    required this.title,
+    required this.body,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -345,9 +396,20 @@ class _FeatureSection extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.check_circle_outline_rounded, size: 18.sp, color: AppColors.primary),
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 18.sp,
+                      color: AppColors.primary,
+                    ),
                     SizedBox(width: 9.w),
-                    Expanded(child: Text(feature, style: AppTextStyles.small(color: AppColors.textPrimary))),
+                    Expanded(
+                      child: Text(
+                        feature,
+                        style: AppTextStyles.small(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -366,8 +428,10 @@ class _CaseStudySections extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <_CaseItem>[
-      if (project.challenge.isNotEmpty) _CaseItem('THE CHALLENGE', project.challenge),
-      if (project.solution.isNotEmpty) _CaseItem('THE SOLUTION', project.solution),
+      if (project.challenge.isNotEmpty)
+        _CaseItem('THE CHALLENGE', project.challenge),
+      if (project.solution.isNotEmpty)
+        _CaseItem('THE SOLUTION', project.solution),
       if (project.results.isNotEmpty) _CaseItem('THE RESULT', project.results),
     ];
 
@@ -399,7 +463,10 @@ class _CaseStudySections extends StatelessWidget {
               Expanded(child: Text(item.body, style: AppTextStyles.body())),
             ],
           ),
-        ).animate().fadeIn(delay: Duration(milliseconds: 300 + (70 * index)), duration: 450.ms);
+        ).animate().fadeIn(
+          delay: Duration(milliseconds: 300 + (70 * index)),
+          duration: 450.ms,
+        );
       },
     );
   }
@@ -444,7 +511,10 @@ class _GallerySection extends StatelessWidget {
                       errorWidget: (_, __, ___) => _galleryFallback(),
                     )
                   : _galleryFallback(),
-            ).animate().fadeIn(delay: Duration(milliseconds: 70 * index), duration: 400.ms);
+            ).animate().fadeIn(
+              delay: Duration(milliseconds: 70 * index),
+              duration: 400.ms,
+            );
           },
         ),
       ],
@@ -455,7 +525,11 @@ class _GallerySection extends StatelessWidget {
     return Container(
       color: AppColors.surfaceSoft,
       alignment: Alignment.center,
-      child: Icon(Icons.image_outlined, color: AppColors.textMuted, size: 30.sp),
+      child: Icon(
+        Icons.image_outlined,
+        color: AppColors.textMuted,
+        size: 30.sp,
+      ),
     );
   }
 }
@@ -481,12 +555,15 @@ class _ProjectCta extends StatelessWidget {
               children: [
                 Text(
                   'Have a project in mind?',
-                  style: AppTextStyles.h3(color: AppColors.textOnPrimary).copyWith(fontSize: 19.sp),
+                  style: AppTextStyles.h3(color: AppColors.textOnPrimary)
+                      .copyWith(fontSize: 19.sp),
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   'Let’s talk about what you’re building next.',
-                  style: AppTextStyles.small(color: AppColors.textOnPrimary.withValues(alpha: .72)),
+                  style: AppTextStyles.small(
+                    color: AppColors.textOnPrimary.withValues(alpha: .72),
+                  ),
                 ),
               ],
             ),
@@ -496,11 +573,19 @@ class _ProjectCta extends StatelessWidget {
             onPressed: () => Get.toNamed(AppRoutes.packages),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textOnPrimary,
-              side: BorderSide(color: AppColors.textOnPrimary.withValues(alpha: .38)),
+              side: BorderSide(
+                color: AppColors.textOnPrimary.withValues(alpha: .38),
+              ),
               padding: EdgeInsets.symmetric(horizontal: 17.w, vertical: 12.h),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
-            child: Text('View Packages', style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary).copyWith(fontSize: 13.sp)),
+            child: Text(
+              'View Packages',
+              style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary)
+                  .copyWith(fontSize: 13.sp),
+            ),
           ),
         ],
       ),
@@ -520,7 +605,11 @@ class _NotFoundState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_open_rounded, size: 50.sp, color: AppColors.textMuted),
+            Icon(
+              Icons.folder_open_rounded,
+              size: 50.sp,
+              color: AppColors.textMuted,
+            ),
             SizedBox(height: 14.h),
             Text('Project unavailable', style: AppTextStyles.h3()),
             SizedBox(height: 7.h),
@@ -537,9 +626,15 @@ class _NotFoundState extends StatelessWidget {
                 foregroundColor: AppColors.textOnPrimary,
                 elevation: 0,
                 padding: EdgeInsets.symmetric(horizontal: 17.w, vertical: 12.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
               ),
-              child: Text('Back to Projects', style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary).copyWith(fontSize: 13.sp)),
+              child: Text(
+                'Back to Projects',
+                style: AppTextStyles.bodyMedium(color: AppColors.textOnPrimary)
+                    .copyWith(fontSize: 13.sp),
+              ),
             ),
           ],
         ),

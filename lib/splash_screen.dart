@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/views/client/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -26,11 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     _timer = Timer(const Duration(milliseconds: 2800), () {
       if (mounted) {
-        Get.off(
-          () => HomeScreen(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 500),
-        );
+        Get.offNamed(AppRoutes.home);
       }
     });
   }

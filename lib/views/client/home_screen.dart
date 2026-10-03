@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/controllers/home_controller.dart';
+import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/hero_section.dart';
 import 'package:sufyan_portfolio/widgets/home_section_previews.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
@@ -31,6 +32,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               const HeroSection(),
               const HomeSectionPreviews(),
+              AppFooter(),
               SizedBox(height: 18.h),
             ],
           ),

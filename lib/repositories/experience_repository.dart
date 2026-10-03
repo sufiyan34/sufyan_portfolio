@@ -40,6 +40,15 @@ class ExperienceRepository {
     return experience.copyWith(id: id);
   }
 
+  /// Writes a deterministic demo/seed record at the experience's existing id.
+  /// Re-running the developer seed updates the same record instead of creating duplicates.
+  Future<void> seed(ExperienceModel experience) async {
+    final map = experience.toMap();
+    map['createdAt'] = _db.serverTimestamp;
+    map['updatedAt'] = _db.serverTimestamp;
+    await _db.set('$_path/${experience.id}', map);
+  }
+
   Future<void> update(ExperienceModel experience) {
     final map = experience.toMap();
     map['updatedAt'] = _db.serverTimestamp;
