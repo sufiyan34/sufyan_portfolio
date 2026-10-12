@@ -163,19 +163,23 @@ class _AdminServicesSkeleton extends StatelessWidget {
         ),
         SizedBox(height: 20.h),
         Expanded(
-          child: GridView.builder(
-            itemCount: 6,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: MediaQuery.of(context).size.width >= 1180
-                  ? 3
-                  : MediaQuery.of(context).size.width >= 780
-                  ? 2
-                  : 1,
-              crossAxisSpacing: 18.w,
-              mainAxisSpacing: 18.h,
-              childAspectRatio: 1.05,
+          // Size columns from the available content width (the admin sidebar
+          // takes space from the screen), matching the real grid.
+          child: LayoutBuilder(
+            builder: (context, constraints) => GridView.builder(
+              itemCount: 6,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: constraints.maxWidth >= 1180
+                    ? 3
+                    : constraints.maxWidth >= 780
+                    ? 2
+                    : 1,
+                crossAxisSpacing: 18.w,
+                mainAxisSpacing: 18.h,
+                childAspectRatio: 1.05,
+              ),
+              itemBuilder: (_, __) => const _AdminCardSkeleton(),
             ),
-            itemBuilder: (_, __) => const _AdminCardSkeleton(),
           ),
         ),
       ],

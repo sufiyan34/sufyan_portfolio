@@ -37,4 +37,35 @@ class ContactRepository {
       'updatedAt': now,
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // ADMIN
+  // ---------------------------------------------------------------------------
+
+  /// Admin: save the public Contact page / footer details.
+  Future<void> saveContent(ContactContentModel content) {
+    return _db.update(_contentPath, {
+      ...content.toMap(),
+      'updatedAt': _db.serverTimestamp,
+    });
+  }
+
+  /// Admin: all inbox messages, newest first.
+  Future<List<ContactMessageModel>> getMessages() async {
+    final data = await _db.readCollectionOnce(_messagesPath);
+    final items = data.entries
+        .map((e) => ContactMessageModel.fromMap(e.key, e.value))
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return items;
+  }
+
+  Future<void> updateMessageStatus(String id, String status) {
+    return _db.update('$_messagesPath/$id', {
+      'status': ContactMessageStatuses.normalize(status),
+      'updatedAt': _db.serverTimestamp,
+    });
+  }
+
+  Future<void> deleteMessage(String id) => _db.remove('$_messagesPath/$id');
 }

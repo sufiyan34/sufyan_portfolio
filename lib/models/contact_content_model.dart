@@ -95,6 +95,31 @@ class ContactMessageModel {
     this.updatedAt = 0,
   });
 
+  factory ContactMessageModel.fromMap(String id, Map<dynamic, dynamic> map) {
+    int toInt(dynamic v) => v is num ? v.round() : 0;
+    return ContactMessageModel(
+      id: id,
+      name: map['name']?.toString() ?? '',
+      email: map['email']?.toString() ?? '',
+      subject: map['subject']?.toString() ?? '',
+      message: map['message']?.toString() ?? '',
+      status: ContactMessageStatuses.normalize(map['status']?.toString()),
+      createdAt: toInt(map['createdAt']),
+      updatedAt: toInt(map['updatedAt']),
+    );
+  }
+
+  ContactMessageModel copyWith({String? status}) => ContactMessageModel(
+        id: id,
+        name: name,
+        email: email,
+        subject: subject,
+        message: message,
+        status: status ?? this.status,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+      );
+
   Map<String, dynamic> toMap() => {
         'name': name,
         'email': email,
@@ -104,4 +129,35 @@ class ContactMessageModel {
         'createdAt': createdAt,
         'updatedAt': updatedAt,
       };
+}
+
+/// Inbox states for a contact message (stored in `status`).
+class ContactMessageStatuses {
+  ContactMessageStatuses._();
+
+  static const newMessage = 'new';
+  static const read = 'read';
+  static const replied = 'replied';
+  static const archived = 'archived';
+
+  static const List<String> all = [newMessage, read, replied, archived];
+
+  static String normalize(String? value) {
+    final v = value?.trim().toLowerCase() ?? '';
+    return all.contains(v) ? v : newMessage;
+  }
+
+  static String label(String value) {
+    switch (normalize(value)) {
+      case read:
+        return 'Read';
+      case replied:
+        return 'Replied';
+      case archived:
+        return 'Archived';
+      case newMessage:
+      default:
+        return 'New';
+    }
+  }
 }

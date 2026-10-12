@@ -6,115 +6,79 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/admin/project_management_controller.dart';
 import 'package:sufyan_portfolio/models/project_model.dart';
+import 'package:sufyan_portfolio/widgets/admin_shell.dart';
+import 'package:sufyan_portfolio/widgets/admin_ui.dart';
 import 'package:sufyan_portfolio/widgets/project_form_dialog.dart';
 
-/// Admin "Project Management" screen — add / edit / delete the portfolio
-/// showcase projects that populate the public Projects grid.
+/// Admin "Projects" screen — add / edit / delete the portfolio showcase
+/// projects that populate the public Projects grid.
 ///
-/// This is a self-contained screen (its own Scaffold) so it can be dropped
-/// straight into an admin shell/sidebar layout later without changes —
-/// that shell isn't built yet, so for now this registers as a standalone
-/// route (AppRoutes.projectManagement).
+/// Rendered inside [AdminShell] so it gets the same sidebar, top bar and
+/// content padding as every other admin page.
 class ProjectManagementScreen extends StatelessWidget {
   const ProjectManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ProjectManagementController());
-    final isDesktop = MediaQuery.of(context).size.width >= 1200;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 48.w : 20.w,
-            vertical: 32.h,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(context, controller),
-              SizedBox(height: 24.h),
-              Expanded(
-                child: Obx(() {
-                  if (controller.isLoading.value) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    );
-                  }
-                  if (controller.projects.isEmpty) {
-                    return _buildEmptyState(context, controller);
-                  }
-                  return RefreshIndicator(
-                    color: AppColors.primary,
-                    onRefresh: controller.loadProjects,
-                    child: GridView.builder(
-                      padding: EdgeInsets.only(bottom: 32.h),
-                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 360.w,
-                        mainAxisSpacing: 20.h,
-                        crossAxisSpacing: 20.w,
-                        childAspectRatio: 0.98,
-                      ),
-                      itemCount: controller.projects.length,
-                      itemBuilder: (context, index) {
-                        final project = controller.projects[index];
-                        return _AdminProjectCard(
-                          project: project,
-                          onEdit: () =>
-                              _openForm(context, controller, existing: project),
-                          onDelete: () =>
-                              _confirmDelete(context, controller, project),
-                        );
-                      },
-                    ),
-                  );
-                }),
-              ),
-            ],
+    return AdminShell(
+      title: 'Projects',
+      eyebrow: 'Public content',
+      trailing: Padding(
+        padding: EdgeInsets.only(right: 4.w),
+        child: Obx(
+          () => AdminPrimaryButton(
+            label: 'Add',
+            icon: Icons.add_rounded,
+            onPressed: controller.isSaving.value
+                ? null
+                : () => _openForm(context, controller),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(
-    BuildContext context,
-    ProjectManagementController controller,
-  ) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Project Management', style: AppTextStyles.h2()),
-              SizedBox(height: 4.h),
-              Text(
-                'Add, edit, or remove the projects shown on your public Projects page.',
-                style: AppTextStyles.body(),
-              ),
-            ],
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(22.w, 20.h, 22.w, 0),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 1200.w),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
+              }
+              if (controller.projects.isEmpty) {
+                return _buildEmptyState(context, controller);
+              }
+              return RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: controller.loadProjects,
+                child: GridView.builder(
+                  padding: EdgeInsets.only(bottom: 32.h),
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 360.w,
+                    mainAxisSpacing: 20.h,
+                    crossAxisSpacing: 20.w,
+                    childAspectRatio: 0.98,
+                  ),
+                  itemCount: controller.projects.length,
+                  itemBuilder: (context, index) {
+                    final project = controller.projects[index];
+                    return _AdminProjectCard(
+                      project: project,
+                      onEdit: () =>
+                          _openForm(context, controller, existing: project),
+                      onDelete: () =>
+                          _confirmDelete(context, controller, project),
+                    );
+                  },
+                ),
+              );
+            }),
           ),
         ),
-        SizedBox(width: 16.w),
-        ElevatedButton.icon(
-          onPressed: () => _openForm(context, controller),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textOnPrimary,
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Add Project'),
-        ),
-      ],
+      ),
     );
   }
 

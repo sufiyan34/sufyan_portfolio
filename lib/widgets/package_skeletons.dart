@@ -68,14 +68,8 @@ class PackageManagementSkeleton extends StatelessWidget {
       highlightColor: AppColors.surface,
       child: Column(
         children: [
-          Row(
-            children: [
-              const Expanded(child: _Bar(width: 240, height: 28)),
-              SizedBox(width: 16.w),
-              _Bar(width: 130.w, height: 42.h, radius: 999),
-            ],
-          ),
-          SizedBox(height: 18.h),
+          // The page title and "Add" button now live in AdminShell's top bar,
+          // so the skeleton only mirrors the toolbar and the card grid.
           _Bar(width: double.infinity, height: 72.h, radius: 18),
           SizedBox(height: 18.h),
           Expanded(

@@ -6,9 +6,15 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/admin/package_management_controller.dart';
 import 'package:sufyan_portfolio/models/package_model.dart';
+import 'package:sufyan_portfolio/widgets/admin_shell.dart';
+import 'package:sufyan_portfolio/widgets/admin_ui.dart';
 import 'package:sufyan_portfolio/widgets/package_form_dialog.dart';
 import 'package:sufyan_portfolio/widgets/package_skeletons.dart';
 
+/// Admin CRUD screen for the `packages/` Firebase node.
+///
+/// Rendered inside [AdminShell] so it gets the same sidebar, top bar and
+/// content padding as every other admin page.
 class PackageManagementScreen extends StatelessWidget {
   const PackageManagementScreen({super.key});
 
@@ -16,66 +22,82 @@ class PackageManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(PackageManagementController());
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 18.h),
-          child: Obx(() {
-            if (controller.isLoading.value) return const PackageManagementSkeleton();
+    return AdminShell(
+      title: 'Packages',
+      eyebrow: 'Public content',
+      trailing: Padding(
+        padding: EdgeInsets.only(right: 4.w),
+        child: Obx(
+          () => AdminPrimaryButton(
+            label: 'Add',
+            icon: Icons.add_rounded,
+            onPressed: controller.isSaving.value
+                ? null
+                : () => _openForm(context, controller),
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(22.w, 20.h, 22.w, 0),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 1200.w),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const PackageManagementSkeleton();
+              }
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Header(controller: controller),
-                SizedBox(height: 18.h),
-                _Toolbar(controller: controller),
-                SizedBox(height: 18.h),
-                Expanded(
-                  child: RefreshIndicator(
-                    color: AppColors.primary,
-                    backgroundColor: AppColors.surface,
-                    onRefresh: controller.loadPackages,
-                    child: controller.filteredPackages.isEmpty
-                        ? const _EmptyAdminState()
-                        : LayoutBuilder(
-                            builder: (context, constraints) {
-                              final columns = constraints.maxWidth >= 1120
-                                  ? 3
-                                  : constraints.maxWidth >= 720
-                                      ? 2
-                                      : 1;
-                              return GridView.builder(
-                                padding: EdgeInsets.only(bottom: 24.h),
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: columns,
-                                  crossAxisSpacing: 18.w,
-                                  mainAxisSpacing: 18.h,
-                                  childAspectRatio: columns == 1 ? 1.13 : 0.98,
-                                ),
-                                itemCount: controller.filteredPackages.length,
-                                itemBuilder: (_, index) {
-                                  final package = controller.filteredPackages[index];
-                                  return _AdminPackageCard(
-                                    package: package,
-                                    onEdit: () => _openForm(context, controller, existing: package),
-                                    onDelete: () => _confirmDelete(context, controller, package),
-                                  )
-                                      .animate()
-                                      .fadeIn(
-                                        delay: Duration(milliseconds: 55 * (index % 6)),
-                                        duration: const Duration(milliseconds: 320),
-                                      )
-                                      .slideY(begin: 0.02, end: 0, curve: Curves.easeOut);
-                                },
-                              );
-                            },
-                          ),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Toolbar(controller: controller),
+                  SizedBox(height: 18.h),
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: AppColors.primary,
+                      backgroundColor: AppColors.surface,
+                      onRefresh: controller.loadPackages,
+                      child: controller.filteredPackages.isEmpty
+                          ? const _EmptyAdminState()
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final columns = constraints.maxWidth >= 1120
+                                    ? 3
+                                    : constraints.maxWidth >= 720
+                                        ? 2
+                                        : 1;
+                                return GridView.builder(
+                                  padding: EdgeInsets.only(bottom: 24.h),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columns,
+                                    crossAxisSpacing: 18.w,
+                                    mainAxisSpacing: 18.h,
+                                    childAspectRatio: columns == 1 ? 1.13 : 0.98,
+                                  ),
+                                  itemCount: controller.filteredPackages.length,
+                                  itemBuilder: (_, index) {
+                                    final package = controller.filteredPackages[index];
+                                    return _AdminPackageCard(
+                                      package: package,
+                                      onEdit: () => _openForm(context, controller, existing: package),
+                                      onDelete: () => _confirmDelete(context, controller, package),
+                                    )
+                                        .animate()
+                                        .fadeIn(
+                                          delay: Duration(milliseconds: 55 * (index % 6)),
+                                          duration: const Duration(milliseconds: 320),
+                                        )
+                                        .slideY(begin: 0.02, end: 0, curve: Curves.easeOut);
+                                  },
+                                );
+                              },
+                            ),
+                    ),
                   ),
-                ),
-              ],
-            );
-          }),
+                ],
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -138,62 +160,6 @@ class PackageManagementScreen extends StatelessWidget {
     );
 
     if (confirmed == true) await controller.deletePackage(package);
-  }
-}
-
-class _Header extends StatelessWidget {
-  final PackageManagementController controller;
-
-  const _Header({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 680;
-        final title = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Package Management', style: AppTextStyles.h2()),
-            SizedBox(height: 5.h),
-            Text(
-              'Create tiered offers or tailor any package into a custom scope.',
-              style: AppTextStyles.body(),
-            ),
-          ],
-        );
-
-        final action = ElevatedButton.icon(
-          onPressed: controller.isSaving.value ? null : () => _openAdd(context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textOnPrimary,
-            padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 13.h),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-            elevation: 0,
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Add Package'),
-        );
-
-        if (compact) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [title, SizedBox(height: 16.h), action],
-          );
-        }
-
-        return Row(children: [Expanded(child: title), action]);
-      },
-    );
-  }
-
-  Future<void> _openAdd(BuildContext context) {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => PackageFormDialog(onSave: controller.savePackage),
-    );
   }
 }
 

@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:get/get_navigation/src/routes/get_route.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/controllers/admin/admin_auth_controller.dart';
 import 'package:sufyan_portfolio/controllers/admin/admin_profile_controller.dart';
@@ -11,7 +10,11 @@ import 'package:sufyan_portfolio/controllers/consultation_controller.dart';
 import 'package:sufyan_portfolio/controllers/hire_request_controller.dart';
 import 'package:sufyan_portfolio/splash_screen.dart';
 import 'package:sufyan_portfolio/views/admin/access_denied_screen.dart';
-import 'package:sufyan_portfolio/views/admin/admin_placeholder_screen.dart';
+import 'package:sufyan_portfolio/views/admin/consultation_management_screen.dart';
+import 'package:sufyan_portfolio/views/admin/contact_message_management_screen.dart';
+import 'package:sufyan_portfolio/views/admin/media_management_screen.dart';
+import 'package:sufyan_portfolio/views/admin/site_management_screen.dart';
+import 'package:sufyan_portfolio/views/admin/testimonial_management_screen.dart';
 import 'package:sufyan_portfolio/views/admin/admin_profile_screen.dart';
 import 'package:sufyan_portfolio/views/admin/admin_dashboard_screen.dart';
 import 'package:sufyan_portfolio/views/admin/experience_management_screen.dart';
@@ -145,33 +148,21 @@ class GetAppRoutes {
     ),
 
     // -----------------------------------------------------------------------
-    // ADMIN PLACEHOLDERS — keeps the shell navigable until these modules are built.
+    // ADMIN MODULES
     // -----------------------------------------------------------------------
     GetPage(
       name: AppRoutes.siteManagement,
-      page: () => const AdminPlaceholderScreen(
-        title: 'Site Management',
-        description: 'Edit global portfolio information, branding and public-site configuration from one place.',
-        icon: Iconsax.setting_2,
-      ),
+      page: () => const SiteManagementScreen(),
       middlewares: [AdminRouteMiddleware()],
     ),
     GetPage(
       name: AppRoutes.testimonialManagement,
-      page: () => const AdminPlaceholderScreen(
-        title: 'Testimonials',
-        description: 'Manage client testimonials, publishing state and presentation order.',
-        icon: Iconsax.message_favorite,
-      ),
+      page: () => const TestimonialManagementScreen(),
       middlewares: [AdminRouteMiddleware()],
     ),
     GetPage(
       name: AppRoutes.mediaManagement,
-      page: () => const AdminPlaceholderScreen(
-        title: 'Media Management',
-        description: 'Organize portfolio media and Cloudinary-backed assets from the admin workspace.',
-        icon: Iconsax.gallery,
-      ),
+      page: () => const MediaManagementScreen(),
       middlewares: [AdminRouteMiddleware()],
     ),
     GetPage(
@@ -192,20 +183,12 @@ class GetAppRoutes {
     ),
     GetPage(
       name: AppRoutes.consultationManagement,
-      page: () => const AdminPlaceholderScreen(
-        title: 'Consultations',
-        description: 'Review consultation enquiries and keep upcoming client conversations organized.',
-        icon: Iconsax.calendar,
-      ),
+      page: () => const ConsultationManagementScreen(),
       middlewares: [AdminRouteMiddleware()],
     ),
     GetPage(
       name: AppRoutes.contactMessageManagement,
-      page: () => const AdminPlaceholderScreen(
-        title: 'Contact Messages',
-        description: 'Your public contact inbox will live here, with read state and follow-up actions.',
-        icon: Iconsax.sms,
-      ),
+      page: () => const ContactMessageManagementScreen(),
       middlewares: [AdminRouteMiddleware()],
     ),
     GetPage(

@@ -37,10 +37,13 @@ class SkillsPageSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SkeletonBox(width: admin ? 300 : 280, height: admin ? 42 : 50),
-          SizedBox(height: 10.h),
-          _SkeletonBox(width: admin ? 520 : 460, height: 18),
-          SizedBox(height: 28.h),
+          // In the admin panel the title lives in AdminShell's top bar.
+          if (!admin) ...[
+            const _SkeletonBox(width: 280, height: 50),
+            SizedBox(height: 10.h),
+            const _SkeletonBox(width: 460, height: 18),
+            SizedBox(height: 28.h),
+          ],
           Wrap(
             spacing: 10.w,
             runSpacing: 10.h,

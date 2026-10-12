@@ -6,104 +6,103 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/admin/service_management_controller.dart';
 import 'package:sufyan_portfolio/models/service_model.dart';
+import 'package:sufyan_portfolio/widgets/admin_shell.dart';
+import 'package:sufyan_portfolio/widgets/admin_ui.dart';
 import 'package:sufyan_portfolio/widgets/service_form_dialog.dart';
 import 'package:sufyan_portfolio/widgets/service_icon.dart';
 import 'package:sufyan_portfolio/widgets/service_skeletons.dart';
 
 /// Admin CRUD screen for the `services/` Firebase node.
 ///
-/// Standalone by design, so it can later sit inside the dark admin shell
-/// without rewriting its content and interactions.
+/// Rendered inside [AdminShell] so it gets the same sidebar, top bar and
+/// content padding as every other admin page.
 class ServiceManagementScreen extends StatelessWidget {
   const ServiceManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ServiceManagementController());
-    final width = MediaQuery.of(context).size.width;
-    final isDesktop = width >= 1200;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 48.w : 20.w,
-            vertical: 30.h,
+    return AdminShell(
+      title: 'Services',
+      eyebrow: 'Public content',
+      trailing: Padding(
+        padding: EdgeInsets.only(right: 4.w),
+        child: Obx(
+          () => AdminPrimaryButton(
+            label: 'Add',
+            icon: Icons.add_rounded,
+            onPressed: controller.isSaving.value
+                ? null
+                : () => _openForm(context, controller),
           ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 1440.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Header(controller: controller),
-                  SizedBox(height: 22.h),
-                  Expanded(
-                    child: Obx(() {
-                      if (controller.isLoading.value) {
-                        return const ServicesPageSkeleton(admin: true);
-                      }
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(22.w, 20.h, 22.w, 0),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 1200.w),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const ServicesPageSkeleton(admin: true);
+              }
 
-                      return Column(
-                        children: [
-                          _Toolbar(controller: controller),
-                          SizedBox(height: 20.h),
-                          Expanded(
-                            child: RefreshIndicator(
-                              color: AppColors.primary,
-                              backgroundColor: AppColors.surface,
-                              onRefresh: controller.loadServices,
-                              child: controller.filteredServices.isEmpty
-                                  ? _EmptyState(controller: controller)
-                                  : LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        final columns = constraints.maxWidth >= 1180
-                                            ? 3
-                                            : constraints.maxWidth >= 780
-                                            ? 2
-                                            : 1;
-                                        return GridView.builder(
-                                          padding: EdgeInsets.only(bottom: 30.h),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: columns,
-                                            crossAxisSpacing: 18.w,
-                                            mainAxisSpacing: 18.h,
-                                            childAspectRatio: columns == 1 ? 1.42 : 1.10,
-                                          ),
-                                          itemCount: controller.filteredServices.length,
-                                          itemBuilder: (_, index) {
-                                            final service = controller.filteredServices[index];
-                                            return _AdminServiceCard(
-                                              service: service,
-                                              onEdit: () => _openForm(
-                                                context,
-                                                controller,
-                                                existing: service,
-                                              ),
-                                              onDelete: () => _confirmDelete(
-                                                context,
-                                                controller,
-                                                service,
-                                              ),
-                                            ).animate().fadeIn(
-                                              delay: Duration(milliseconds: 55 * (index % 6)),
-                                              duration: const Duration(milliseconds: 320),
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
+              return Column(
+                children: [
+                  _Toolbar(controller: controller),
+                  SizedBox(height: 20.h),
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: AppColors.primary,
+                      backgroundColor: AppColors.surface,
+                      onRefresh: controller.loadServices,
+                      child: controller.filteredServices.isEmpty
+                          ? _EmptyState(controller: controller)
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final columns = constraints.maxWidth >= 1180
+                                    ? 3
+                                    : constraints.maxWidth >= 780
+                                    ? 2
+                                    : 1;
+                                return GridView.builder(
+                                  padding: EdgeInsets.only(bottom: 30.h),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columns,
+                                    crossAxisSpacing: 18.w,
+                                    mainAxisSpacing: 18.h,
+                                    childAspectRatio: columns == 1 ? 1.42 : 1.10,
+                                  ),
+                                  itemCount: controller.filteredServices.length,
+                                  itemBuilder: (_, index) {
+                                    final service = controller.filteredServices[index];
+                                    return _AdminServiceCard(
+                                      service: service,
+                                      onEdit: () => _openForm(
+                                        context,
+                                        controller,
+                                        existing: service,
+                                      ),
+                                      onDelete: () => _confirmDelete(
+                                        context,
+                                        controller,
+                                        service,
+                                      ),
+                                    ).animate().fadeIn(
+                                      delay: Duration(milliseconds: 55 * (index % 6)),
+                                      duration: const Duration(milliseconds: 320),
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                          ),
-                        ],
-                      );
-                    }),
+                    ),
                   ),
                 ],
-              ),
-            ),
+              );
+            }),
           ),
         ),
       ),
@@ -166,61 +165,6 @@ class ServiceManagementScreen extends StatelessWidget {
     );
 
     if (confirmed == true) await controller.deleteService(service);
-  }
-}
-
-class _Header extends StatelessWidget {
-  final ServiceManagementController controller;
-
-  const _Header({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 640;
-        final title = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Service Management', style: AppTextStyles.h2()),
-            SizedBox(height: 5.h),
-            Text(
-              'Manage the services and capabilities shown on your public portfolio.',
-              style: AppTextStyles.body(),
-            ),
-          ],
-        );
-
-        final action = ElevatedButton.icon(
-          onPressed: controller.isSaving.value ? null : () => _openAdd(context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textOnPrimary,
-            padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 13.h),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Add Service'),
-        );
-
-        if (compact) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [title, SizedBox(height: 16.h), action],
-          );
-        }
-
-        return Row(children: [Expanded(child: title), action]);
-      },
-    );
-  }
-
-  Future<void> _openAdd(BuildContext context) {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => ServiceFormDialog(onSave: controller.saveService),
-    );
   }
 }
 

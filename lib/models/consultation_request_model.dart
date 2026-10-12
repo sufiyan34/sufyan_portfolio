@@ -56,6 +56,9 @@ class ConsultationRequestModel {
   final String preferredTime;
   final List<ConsultationAttachment> attachments;
   final String status;
+
+  /// Private notes written by the admin. Never shown to visitors.
+  final String adminNotes;
   final int createdAt;
   final int updatedAt;
 
@@ -69,9 +72,27 @@ class ConsultationRequestModel {
     required this.preferredTime,
     required this.attachments,
     required this.status,
+    this.adminNotes = '',
     required this.createdAt,
     required this.updatedAt,
   });
+
+  ConsultationRequestModel copyWith({String? status, String? adminNotes}) {
+    return ConsultationRequestModel(
+      id: id,
+      name: name,
+      email: email,
+      consultationType: consultationType,
+      message: message,
+      preferredDate: preferredDate,
+      preferredTime: preferredTime,
+      attachments: attachments,
+      status: status ?? this.status,
+      adminNotes: adminNotes ?? this.adminNotes,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
 
   factory ConsultationRequestModel.fromMap(
     String id,
@@ -98,7 +119,8 @@ class ConsultationRequestModel {
       preferredDate: map['preferredDate']?.toString() ?? '',
       preferredTime: map['preferredTime']?.toString() ?? '',
       attachments: attachments,
-      status: map['status']?.toString() ?? 'new',
+      status: ConsultationStatuses.normalize(map['status']?.toString()),
+      adminNotes: map['adminNotes']?.toString() ?? '',
       createdAt: map['createdAt'] is num
           ? (map['createdAt'] as num).round()
           : 0,
@@ -122,4 +144,44 @@ class ConsultationRequestModel {
     'createdAt': createdAt,
     'updatedAt': updatedAt,
   };
+}
+
+/// Workflow states for a consultation request (stored in `status`).
+class ConsultationStatuses {
+  ConsultationStatuses._();
+
+  static const newRequest = 'new';
+  static const contacted = 'contacted';
+  static const scheduled = 'scheduled';
+  static const completed = 'completed';
+  static const cancelled = 'cancelled';
+
+  static const List<String> all = [
+    newRequest,
+    contacted,
+    scheduled,
+    completed,
+    cancelled,
+  ];
+
+  static String normalize(String? value) {
+    final v = value?.trim().toLowerCase() ?? '';
+    return all.contains(v) ? v : newRequest;
+  }
+
+  static String label(String value) {
+    switch (normalize(value)) {
+      case contacted:
+        return 'Contacted';
+      case scheduled:
+        return 'Scheduled';
+      case completed:
+        return 'Completed';
+      case cancelled:
+        return 'Cancelled';
+      case newRequest:
+      default:
+        return 'New';
+    }
+  }
 }

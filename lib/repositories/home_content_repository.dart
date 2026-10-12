@@ -41,6 +41,15 @@ class HomeContentRepository {
     }
   }
 
+  /// Admin: every stat (including inactive ones), in display order.
+  /// Unlike [getStats] this never falls back to the built-in copy, so the
+  /// editor shows exactly what is stored in Firebase.
+  Future<List<HomeStatModel>> getAllStats() async {
+    final data = await _db.readCollectionOnce(_statsPath);
+    return data.entries.map((e) => HomeStatModel.fromMap(e.key, e.value)).toList()
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+  }
+
   /// Admin: overwrite the hero copy fields (stats are edited separately,
   /// per stat, since they're a child collection).
   Future<void> updateHomeContent(HomeContentModel content) {

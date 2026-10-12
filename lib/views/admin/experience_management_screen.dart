@@ -7,10 +7,15 @@ import 'package:sufyan_portfolio/constant/app_colors.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/admin/experience_management_controller.dart';
 import 'package:sufyan_portfolio/models/experience_model.dart';
+import 'package:sufyan_portfolio/widgets/admin_shell.dart';
+import 'package:sufyan_portfolio/widgets/admin_ui.dart';
 import 'package:sufyan_portfolio/widgets/experience_form_dialog.dart';
 import 'package:sufyan_portfolio/widgets/experience_skeletons.dart';
 
 /// Admin experience management — add / edit / delete the public timeline.
+///
+/// Rendered inside [AdminShell] so it gets the same sidebar, top bar and
+/// content padding as every other admin page.
 class ExperienceManagementScreen extends StatelessWidget {
   const ExperienceManagementScreen({super.key});
 
@@ -18,81 +23,97 @@ class ExperienceManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(ExperienceManagementController());
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: MediaQuery.sizeOf(context).width >= 1200 ? 48.w : 20.w,
-            vertical: 30.h,
+    return AdminShell(
+      title: 'Experience',
+      eyebrow: 'Public content',
+      trailing: Padding(
+        padding: EdgeInsets.only(right: 4.w),
+        child: Obx(
+          () => AdminPrimaryButton(
+            label: 'Add',
+            icon: Icons.add_rounded,
+            onPressed: controller.isSaving.value
+                ? null
+                : () => _openForm(context, controller),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Header(controller: controller),
-              SizedBox(height: 22.h),
-              _Toolbar(controller: controller),
-              SizedBox(height: 20.h),
-              Expanded(
-                child: Obx(() {
-                  if (controller.isLoading.value) {
-                    return const ExperienceAdminSkeleton();
-                  }
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(22.w, 20.h, 22.w, 0),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 1200.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Toolbar(controller: controller),
+                SizedBox(height: 20.h),
+                Expanded(
+                  child: Obx(() {
+                    if (controller.isLoading.value) {
+                      return const ExperienceAdminSkeleton();
+                    }
 
-                  final items = controller.filteredExperiences;
-                  if (items.isEmpty) {
-                    return _EmptyState(
-                      hasFilters: controller.searchQuery.value.trim().isNotEmpty ||
-                          controller.selectedType.value != 'All',
-                      onAdd: () => _openForm(context, controller),
-                      onClear: () {
-                        controller.setSearch('');
-                        controller.selectType('All');
-                      },
+                    final items = controller.filteredExperiences;
+                    if (items.isEmpty) {
+                      return _EmptyState(
+                        hasFilters:
+                            controller.searchQuery.value.trim().isNotEmpty ||
+                                controller.selectedType.value != 'All',
+                        onAdd: () => _openForm(context, controller),
+                        onClear: () {
+                          controller.setSearch('');
+                          controller.selectType('All');
+                        },
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: controller.loadExperiences,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final compact = constraints.maxWidth < 820;
+                          return GridView.builder(
+                            padding: EdgeInsets.only(bottom: 28.h),
+                            gridDelegate:
+                                SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: compact ? 680.w : 440.w,
+                              mainAxisSpacing: 18.h,
+                              crossAxisSpacing: 18.w,
+                              childAspectRatio: compact ? 1.28 : 1.04,
+                            ),
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              final experience = items[index];
+                              return _AdminExperienceCard(
+                                experience: experience,
+                                onEdit: () => _openForm(
+                                  context,
+                                  controller,
+                                  existing: experience,
+                                ),
+                                onDelete: () => _confirmDelete(
+                                  context,
+                                  controller,
+                                  experience,
+                                ),
+                              )
+                                  .animate()
+                                  .fadeIn(
+                                    duration: 350.ms,
+                                    delay: (index * 55).ms,
+                                  )
+                                  .slideY(begin: 0.04, end: 0);
+                            },
+                          );
+                        },
+                      ),
                     );
-                  }
-
-                  return RefreshIndicator(
-                    color: AppColors.primary,
-                    onRefresh: controller.loadExperiences,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final compact = constraints.maxWidth < 820;
-                        return GridView.builder(
-                          padding: EdgeInsets.only(bottom: 28.h),
-                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: compact ? 680.w : 440.w,
-                            mainAxisSpacing: 18.h,
-                            crossAxisSpacing: 18.w,
-                            childAspectRatio: compact ? 1.28 : 1.04,
-                          ),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final experience = items[index];
-                            return _AdminExperienceCard(
-                              experience: experience,
-                              onEdit: () => _openForm(
-                                context,
-                                controller,
-                                existing: experience,
-                              ),
-                              onDelete: () => _confirmDelete(
-                                context,
-                                controller,
-                                experience,
-                              ),
-                            )
-                                .animate()
-                                .fadeIn(duration: 350.ms, delay: (index * 55).ms)
-                                .slideY(begin: 0.04, end: 0);
-                          },
-                        );
-                      },
-                    ),
-                  );
-                }),
-              ),
-            ],
+                  }),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -161,68 +182,6 @@ class ExperienceManagementScreen extends StatelessWidget {
     if (confirmed == true) {
       await controller.deleteExperience(experience);
     }
-  }
-}
-
-class _Header extends StatelessWidget {
-  final ExperienceManagementController controller;
-
-  const _Header({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 650;
-
-        final title = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Experience Management', style: AppTextStyles.h2()),
-            SizedBox(height: 4.h),
-            Text(
-              'Add, edit, publish, or remove the experience entries shown to clients.',
-              style: AppTextStyles.body(),
-            ),
-          ],
-        );
-
-        final action = ElevatedButton.icon(
-          onPressed: controller.isSaving.value
-              ? null
-              : () => ExperienceManagementScreen._openForm(context, controller),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textOnPrimary,
-            padding: EdgeInsets.symmetric(horizontal: 19.w, vertical: 13.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999.r),
-            ),
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Add Experience'),
-        );
-
-        if (compact) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              title,
-              SizedBox(height: 14.h),
-              Align(alignment: Alignment.centerLeft, child: action),
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(child: title),
-            SizedBox(width: 16.w),
-            action,
-          ],
-        );
-      },
-    );
   }
 }
 
