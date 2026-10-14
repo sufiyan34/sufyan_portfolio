@@ -802,7 +802,10 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
   late final TextEditingController _phone;
   late final TextEditingController _location;
   late final TextEditingController _hours;
-  late final TextEditingController _image;
+  late final String _imageUrl;
+  late final TextEditingController _lat;
+  late final TextEditingController _lng;
+  late final TextEditingController _zoom;
   final Map<String, TextEditingController> _links = {};
 
   @override
@@ -819,7 +822,10 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
     _phone = TextEditingController(text: c.phone);
     _location = TextEditingController(text: c.location);
     _hours = TextEditingController(text: c.workingHours);
-    _image = TextEditingController(text: c.imageUrl);
+    _imageUrl = c.imageUrl;
+    _lat = TextEditingController(text: c.latitude.toString());
+    _lng = TextEditingController(text: c.longitude.toString());
+    _zoom = TextEditingController(text: c.mapZoom.toString());
     for (final key in _socials.keys) {
       _links[key] = TextEditingController(text: c.socialLinks[key] ?? '');
     }
@@ -827,7 +833,7 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
 
   @override
   void dispose() {
-    for (final c in [_eyebrow, _title, _subtitle, _email, _phone, _location, _hours, _image]) {
+    for (final c in [_eyebrow, _title, _subtitle, _email, _phone, _location, _hours, _lat, _lng, _zoom]) {
       c.dispose();
     }
     for (final c in _links.values) {
@@ -838,6 +844,22 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final lat = double.tryParse(_lat.text.trim());
+    final lng = double.tryParse(_lng.text.trim());
+    final zoom = double.tryParse(_zoom.text.trim());
+    if (lat == null || lat < -90 || lat > 90) {
+      adminSnack('Check the latitude', 'Use a number between -90 and 90, e.g. 31.5204', error: true);
+      return;
+    }
+    if (lng == null || lng < -180 || lng > 180) {
+      adminSnack('Check the longitude', 'Use a number between -180 and 180, e.g. 74.3587', error: true);
+      return;
+    }
+    if (zoom == null || zoom < 3 || zoom > 18) {
+      adminSnack('Check the map zoom', 'Use a number between 3 (world) and 18 (street).', error: true);
+      return;
+    }
 
     final links = <String, String>{
       for (final entry in _links.entries)
@@ -853,7 +875,10 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
         phone: _phone.text.trim(),
         location: _location.text.trim(),
         workingHours: _hours.text.trim(),
-        imageUrl: _image.text.trim(),
+        imageUrl: _imageUrl,
+        latitude: lat,
+        longitude: lng,
+        mapZoom: zoom,
         socialLinks: links,
       ),
     );
@@ -912,11 +937,33 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
               ),
               _sectionGap,
               AdminCard(
-                title: 'Contact image',
-                child: AdminImageField(
-                  label: 'Contact page image',
-                  controller: _image,
-                  folder: 'portfolio/site/contact',
+                title: 'Map location',
+                subtitle:
+                    'Shown as an interactive map on the Contact page. In Google Maps, right-click your spot and click the coordinates to copy them.',
+                child: Column(
+                  children: [
+                    AdminTwoCol(
+                      left: AdminTextField(
+                        controller: _lat,
+                        label: 'Latitude',
+                        hint: '31.5204',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      ),
+                      right: AdminTextField(
+                        controller: _lng,
+                        label: 'Longitude',
+                        hint: '74.3587',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      ),
+                    ),
+                    _gap,
+                    AdminTextField(
+                      controller: _zoom,
+                      label: 'Zoom (3 = world, 18 = street)',
+                      hint: '13',
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                  ],
                 ),
               ),
               _sectionGap,

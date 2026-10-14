@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,9 +7,10 @@ import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/contact_controller.dart';
 import 'package:sufyan_portfolio/widgets/app_footer.dart';
+import 'package:sufyan_portfolio/widgets/contact_map_card.dart';
 import 'package:sufyan_portfolio/widgets/contact_skeletons.dart';
+import 'package:sufyan_portfolio/widgets/contact_social_links.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -120,6 +120,10 @@ class _ContactIntro extends StatelessWidget {
           icon: Icons.location_on_outlined,
           label: 'Location',
           value: content.location,
+          onTap: () => _launch(
+            'https://www.google.com/maps/search/?api=1'
+            '&query=${content.latitude},${content.longitude}',
+          ),
         ),
         _ContactDetailTile(
           icon: Icons.schedule_outlined,
@@ -127,36 +131,13 @@ class _ContactIntro extends StatelessWidget {
           value: content.workingHours,
         ),
         SizedBox(height: 12.h),
-        _ImageCard(imageUrl: content.imageUrl),
-        SizedBox(height: 20.h),
-        Text('Follow Me', style: AppTextStyles.h3().copyWith(fontSize: 18.sp)),
-        SizedBox(height: 11.h),
-        Wrap(
-          spacing: 9.w,
-          runSpacing: 9.h,
-          children: [
-            _SocialButton(
-              icon: Icons.code_rounded,
-              label: 'GitHub',
-              url: content.socialLinks['github'],
-            ),
-            _SocialButton(
-              icon: Icons.work_outline_rounded,
-              label: 'LinkedIn',
-              url: content.socialLinks['linkedin'],
-            ),
-            _SocialButton(
-              icon: Icons.language_rounded,
-              label: 'Website',
-              url: content.socialLinks['website'],
-            ),
-            _SocialButton(
-              icon: Icons.alternate_email_rounded,
-              label: 'X / Social',
-              url: content.socialLinks['x'],
-            ),
-          ],
+        ContactMapCard(
+          latitude: content.latitude,
+          longitude: content.longitude,
+          zoom: content.mapZoom,
+          label: content.location,
         ),
+        ContactSocialLinks(links: content.socialLinks),
       ],
     );
   }
@@ -218,85 +199,6 @@ class _ContactDetailTile extends StatelessWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(onTap: onTap, child: child),
             ),
-    );
-  }
-}
-
-class _ImageCard extends StatelessWidget {
-  final String imageUrl;
-  const _ImageCard({required this.imageUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22.r),
-      child: AspectRatio(
-        aspectRatio: 2.5,
-        child: imageUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => _fallback(),
-                errorWidget: (_, __, ___) => _fallback(),
-              )
-            : _fallback(),
-      ),
-    );
-  }
-
-  Widget _fallback() {
-    return Container(
-      color: AppColors.surfaceSoft,
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.photo_camera_back_outlined,
-        size: 38.sp,
-        color: AppColors.textMuted,
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String? url;
-
-  const _SocialButton({required this.icon, required this.label, this.url});
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = url != null && url!.trim().isNotEmpty;
-    return MouseRegion(
-      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: enabled ? () => _launch(url!) : null,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 9.h),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 16.sp,
-                color: enabled ? AppColors.primary : AppColors.textMuted,
-              ),
-              SizedBox(width: 7.w),
-              Text(
-                label,
-                style: AppTextStyles.small(
-                  color: enabled ? AppColors.textPrimary : AppColors.textMuted,
-                ).copyWith(fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -554,8 +456,4 @@ String? _required(String? value, String message) {
   return null;
 }
 
-Future<void> _launch(String rawUrl) async {
-  final uri = Uri.tryParse(rawUrl);
-  if (uri == null) return;
-  await launchUrl(uri, mode: LaunchMode.platformDefault);
-}
+Future<void> _launch(String rawUrl) => openExternalLink(rawUrl);

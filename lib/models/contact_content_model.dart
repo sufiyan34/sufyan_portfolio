@@ -9,6 +9,15 @@ class ContactContentModel {
   final String imageUrl;
   final Map<String, String> socialLinks;
 
+  /// Where the public Contact page map is centred (defaults to Lahore).
+  final double latitude;
+  final double longitude;
+  final double mapZoom;
+
+  static const double defaultLatitude = 31.5204;
+  static const double defaultLongitude = 74.3587;
+  static const double defaultMapZoom = 13;
+
   const ContactContentModel({
     required this.eyebrow,
     required this.title,
@@ -19,6 +28,9 @@ class ContactContentModel {
     required this.workingHours,
     required this.imageUrl,
     required this.socialLinks,
+    this.latitude = defaultLatitude,
+    this.longitude = defaultLongitude,
+    this.mapZoom = defaultMapZoom,
   });
 
   factory ContactContentModel.fallback() => const ContactContentModel(
@@ -55,6 +67,9 @@ class ContactContentModel {
       workingHours: _string(map['workingHours'], fallback.workingHours),
       imageUrl: _string(map['imageUrl'], ''),
       socialLinks: links,
+      latitude: _coordinate(map['latitude'], defaultLatitude, -90, 90),
+      longitude: _coordinate(map['longitude'], defaultLongitude, -180, 180),
+      mapZoom: _coordinate(map['mapZoom'], defaultMapZoom, 3, 18),
     );
   }
 
@@ -68,10 +83,20 @@ class ContactContentModel {
         'workingHours': workingHours,
         'imageUrl': imageUrl,
         'socialLinks': socialLinks,
+        'latitude': latitude,
+        'longitude': longitude,
+        'mapZoom': mapZoom,
       };
 
   static String _string(dynamic value, String fallback) =>
       value is String && value.trim().isNotEmpty ? value.trim() : fallback;
+
+  /// Firebase may hand back an int, a double or a string; clamp to a sane range.
+  static double _coordinate(dynamic value, double fallback, double min, double max) {
+    final parsed = value is num ? value.toDouble() : double.tryParse('$value');
+    if (parsed == null || parsed.isNaN) return fallback;
+    return parsed.clamp(min, max).toDouble();
+  }
 }
 
 class ContactMessageModel {

@@ -75,13 +75,12 @@ dependencies:
   mailto: ^2.0.0
   flutter_email_sender: ^10.0.1
   font_awesome_flutter: ^11.0.0
+  flutter_map: ^8.3.2
   
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: 
-
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
