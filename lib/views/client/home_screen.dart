@@ -8,6 +8,7 @@ import 'package:sufyan_portfolio/widgets/app_footer.dart';
 import 'package:sufyan_portfolio/widgets/hero_section.dart';
 import 'package:sufyan_portfolio/widgets/home_section_previews.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
+import 'package:sufyan_portfolio/widgets/testimonials_section.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -32,6 +33,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               const HeroSection(),
               const HomeSectionPreviews(),
+              const TestimonialsSection(),
               AppFooter(),
               SizedBox(height: 18.h),
             ],

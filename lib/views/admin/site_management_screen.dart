@@ -8,6 +8,7 @@ import 'package:sufyan_portfolio/controllers/admin/site_management_controller.da
 import 'package:sufyan_portfolio/models/about_content_model.dart';
 import 'package:sufyan_portfolio/models/contact_content_model.dart';
 import 'package:sufyan_portfolio/models/home_content_model.dart';
+import 'package:sufyan_portfolio/widgets/admin_file_field.dart';
 import 'package:sufyan_portfolio/widgets/admin_image_field.dart';
 import 'package:sufyan_portfolio/widgets/admin_shell.dart';
 import 'package:sufyan_portfolio/widgets/admin_ui.dart';
@@ -516,6 +517,7 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
   late final TextEditingController _signature;
   late final TextEditingController _availability;
   late final TextEditingController _image;
+  late final TextEditingController _resume;
   late final TextEditingController _traits;
   late final TextEditingController _capabilities;
   final List<_JourneyDraft> _journey = [];
@@ -537,6 +539,7 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
     _signature = TextEditingController(text: a.signature);
     _availability = TextEditingController(text: a.availabilityLabel);
     _image = TextEditingController(text: a.imageUrl);
+    _resume = TextEditingController(text: a.resumeUrl);
     _traits = TextEditingController(text: a.traits.join('\n'));
     _capabilities = TextEditingController(text: a.capabilities.join('\n'));
     for (final j in a.journey) {
@@ -548,7 +551,7 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
   void dispose() {
     for (final c in [
       _eyebrow, _title, _subtitle, _description, _signature,
-      _availability, _image, _traits, _capabilities,
+      _availability, _image, _resume, _traits, _capabilities,
     ]) {
       c.dispose();
     }
@@ -607,6 +610,7 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
         signature: _signature.text.trim(),
         availabilityLabel: _availability.text.trim(),
         imageUrl: _image.text.trim(),
+        resumeUrl: _resume.text.trim(),
         traits: _lines(_traits),
         capabilities: _lines(_capabilities),
         journey: journey,
@@ -671,6 +675,17 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
                   label: 'About image',
                   controller: _image,
                   folder: 'portfolio/site/about',
+                ),
+              ),
+              _sectionGap,
+              AdminCard(
+                title: 'Resume (PDF)',
+                subtitle:
+                    'Powers the "Download Resume" button on the About page. Leave empty to hide the button.',
+                child: AdminFileField(
+                  label: 'Resume URL',
+                  controller: _resume,
+                  folder: 'portfolio/site/resume',
                 ),
               ),
               _sectionGap,

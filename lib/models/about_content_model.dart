@@ -11,6 +11,9 @@ class AboutContentModel {
   final String imageUrl;
   final String signature;
   final String availabilityLabel;
+
+  /// Link to the downloadable resume PDF (empty = hide the button).
+  final String resumeUrl;
   final List<AboutJourneyItem> journey;
   final List<String> traits;
   final List<String> capabilities;
@@ -24,6 +27,7 @@ class AboutContentModel {
     required this.imageUrl,
     required this.signature,
     required this.availabilityLabel,
+    this.resumeUrl = '',
     required this.journey,
     required this.traits,
     required this.capabilities,
@@ -91,6 +95,7 @@ class AboutContentModel {
       subtitle: _string(map['subtitle'], fallback.subtitle),
       description: _string(map['description'], fallback.description),
       imageUrl: _string(map['imageUrl'], ''),
+      resumeUrl: _string(map['resumeUrl'], ''),
       signature: _string(map['signature'], fallback.signature),
       availabilityLabel: _string(
         map['availabilityLabel'],
@@ -109,6 +114,7 @@ class AboutContentModel {
         'subtitle': subtitle,
         'description': description,
         'imageUrl': imageUrl,
+        'resumeUrl': resumeUrl,
         'signature': signature,
         'availabilityLabel': availabilityLabel,
         'journey': {
@@ -125,6 +131,7 @@ class AboutContentModel {
     String? subtitle,
     String? description,
     String? imageUrl,
+    String? resumeUrl,
     String? signature,
     String? availabilityLabel,
     List<AboutJourneyItem>? journey,
@@ -138,6 +145,7 @@ class AboutContentModel {
       subtitle: subtitle ?? this.subtitle,
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
+      resumeUrl: resumeUrl ?? this.resumeUrl,
       signature: signature ?? this.signature,
       availabilityLabel: availabilityLabel ?? this.availabilityLabel,
       journey: journey ?? this.journey,

@@ -56,6 +56,7 @@ class MyApp extends StatelessWidget {
           transitionDuration: const Duration(milliseconds: 300),
           initialRoute: AppRoutes.splash,
           getPages: GetAppRoutes.pages,
+          unknownRoute: GetAppRoutes.unknownRoute,
         );
       },
     );

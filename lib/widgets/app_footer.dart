@@ -503,11 +503,17 @@ class _AppFooterState extends State<AppFooter> {
     );
 
     final toTop = _BackToTop(onTap: _scrollToTop);
+    final privacy = _LegalLink(
+      label: 'Privacy Policy',
+      onTap: () => _go(AppRoutes.privacyPolicy),
+    );
 
     if (wide) {
       return Row(
         children: [
           copyright,
+          SizedBox(width: 18.w),
+          privacy,
           const Spacer(),
           built,
           SizedBox(width: 16.w),
@@ -524,6 +530,8 @@ class _AppFooterState extends State<AppFooter> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               copyright,
+              SizedBox(height: 4.h),
+              privacy,
               SizedBox(height: 4.h),
               built,
             ],
@@ -843,3 +851,42 @@ class _BackWavePainter extends CustomPainter {
 // SingleChildScrollView(
 //   child: Column(children: [YourPaddedContent(), const AppFooter()]),
 // )
+
+/// Small "Privacy Policy" link in the footer's bottom bar.
+class _LegalLink extends StatefulWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _LegalLink({required this.label, required this.onTap});
+
+  @override
+  State<_LegalLink> createState() => _LegalLinkState();
+}
+
+class _LegalLinkState extends State<_LegalLink> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 180),
+          style: AppTextStyles.small(
+            color: _hover ? AppColors.accentGold : Colors.white.withValues(alpha: 0.78),
+          ).copyWith(
+            fontSize: 11.5.sp,
+            fontWeight: FontWeight.w600,
+            decoration: _hover ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: AppColors.accentGold,
+          ),
+          child: Text(widget.label),
+        ),
+      ),
+    );
+  }
+}

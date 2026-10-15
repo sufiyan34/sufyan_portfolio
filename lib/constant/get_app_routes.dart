@@ -10,6 +10,8 @@ import 'package:sufyan_portfolio/controllers/consultation_controller.dart';
 import 'package:sufyan_portfolio/controllers/hire_request_controller.dart';
 import 'package:sufyan_portfolio/splash_screen.dart';
 import 'package:sufyan_portfolio/views/admin/access_denied_screen.dart';
+import 'package:sufyan_portfolio/views/client/not_found_screen.dart';
+import 'package:sufyan_portfolio/views/client/privacy_policy_screen.dart';
 import 'package:sufyan_portfolio/views/admin/consultation_management_screen.dart';
 import 'package:sufyan_portfolio/views/admin/contact_message_management_screen.dart';
 import 'package:sufyan_portfolio/views/admin/media_management_screen.dart';
@@ -42,6 +44,13 @@ import 'package:sufyan_portfolio/views/client/skills_screen.dart';
 
 class GetAppRoutes {
   GetAppRoutes._();
+
+  /// Shown for any URL that doesn't match a route (set as `unknownRoute`
+  /// in main.dart).
+  static final unknownRoute = GetPage(
+    name: AppRoutes.notFound,
+    page: () => const NotFoundScreen(),
+  );
 
   static final pages = [
     // -----------------------------------------------------------------------
@@ -87,6 +96,11 @@ class GetAppRoutes {
       page: () => const ProjectDetailsScreen(),
     ),
     GetPage(name: AppRoutes.packages, page: () => const PackagesScreen()),
+    GetPage(
+      name: AppRoutes.privacyPolicy,
+      page: () => const PrivacyPolicyScreen(),
+    ),
+    GetPage(name: AppRoutes.notFound, page: () => const NotFoundScreen()),
     GetPage(
       name: AppRoutes.hireUs,
       page: () => const HireUsScreen(),

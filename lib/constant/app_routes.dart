@@ -39,6 +39,10 @@ class AppRoutes {
 
   static const requestSuccess = '/request-success';
 
+  static const privacyPolicy = '/privacy-policy';
+
+  static const notFound = '/not-found';
+
   // ============================================================
   // Customer / User
   // ============================================================

@@ -10,6 +10,8 @@ import 'package:sufyan_portfolio/controllers/about_controller.dart';
 import 'package:sufyan_portfolio/models/about_content_model.dart';
 import 'package:sufyan_portfolio/widgets/about_skeletons.dart';
 import 'package:sufyan_portfolio/widgets/app_footer.dart';
+import 'package:sufyan_portfolio/widgets/resume_button.dart';
+import 'package:sufyan_portfolio/widgets/testimonials_section.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -45,6 +47,7 @@ class AboutScreen extends StatelessWidget {
                   return _AboutContent(controller: controller);
                 }),
               ),
+              const TestimonialsSection(),
               AppFooter(),
             ],
           ),
@@ -130,6 +133,8 @@ class _HeroIntro extends StatelessWidget {
             style: AppTextStyles.bodyMedium(),
           ).animate().fadeIn(delay: 120.ms, duration: 420.ms),
         ),
+        SizedBox(height: 20.h),
+        ResumeButton(url: content.resumeUrl),
       ],
     );
   }

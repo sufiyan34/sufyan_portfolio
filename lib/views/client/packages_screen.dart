@@ -8,6 +8,7 @@ import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/packages_controller.dart';
 import 'package:sufyan_portfolio/models/package_model.dart';
 import 'package:sufyan_portfolio/widgets/app_footer.dart';
+import 'package:sufyan_portfolio/widgets/faq_section.dart';
 import 'package:sufyan_portfolio/widgets/package_card.dart';
 import 'package:sufyan_portfolio/widgets/package_skeletons.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
@@ -102,6 +103,9 @@ class PackagesScreen extends StatelessWidget {
                               ),
                             SizedBox(height: 40.h),
                             _buildCustomCta(),
+                            SizedBox(height: 56.h),
+                            const FaqSection(),
+                            SizedBox(height: 20.h),
                           ],
                         );
                       }),
