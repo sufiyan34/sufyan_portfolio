@@ -273,6 +273,25 @@ class _TestimonialCardState extends State<_TestimonialCard> {
                                 : AppColors.textMuted,
                           ),
                         ),
+                      if (t.isVerifiedClient)
+                        Padding(
+                          padding: EdgeInsets.only(top: 3.h),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified_rounded, size: 13.sp, color: AppColors.accentGold),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Verified client',
+                                style: AppTextStyles.small(
+                                  color: t.featured
+                                      ? Colors.white.withValues(alpha: .8)
+                                      : AppColors.textSecondary,
+                                ).copyWith(fontSize: 11.sp, fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),

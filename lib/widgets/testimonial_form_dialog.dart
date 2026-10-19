@@ -13,7 +13,25 @@ class TestimonialFormDialog extends StatefulWidget {
   final TestimonialModel? existing;
   final Future<bool> Function(TestimonialModel draft) onSave;
 
-  const TestimonialFormDialog({super.key, this.existing, required this.onSave});
+  /// Set when reviewing a client's submission: shown as a note at the top and
+  /// switches the dialog to "Review testimonial" mode.
+  final String? bannerNote;
+
+  /// Overrides the confirm button label (e.g. "Approve & publish").
+  final String? submitLabel;
+
+  /// The client's original wording. If the saved quote differs, the
+  /// testimonial is flagged as edited (and loses the "Verified client" badge).
+  final String? originalQuote;
+
+  const TestimonialFormDialog({
+    super.key,
+    this.existing,
+    required this.onSave,
+    this.bannerNote,
+    this.submitLabel,
+    this.originalQuote,
+  });
 
   @override
   State<TestimonialFormDialog> createState() => _TestimonialFormDialogState();
@@ -36,7 +54,8 @@ class _TestimonialFormDialogState extends State<TestimonialFormDialog> {
 
   final bool _cloudinaryReady = ensureCloudinaryService() != null;
 
-  bool get _isEditing => widget.existing != null;
+  bool get _isEditing =>
+      widget.existing != null && widget.existing!.id.isNotEmpty;
 
   @override
   void initState() {
@@ -76,6 +95,10 @@ class _TestimonialFormDialogState extends State<TestimonialFormDialog> {
       avatarUrl: _avatarUrl.text.trim(),
       featured: _featured,
       published: _published,
+      quoteEdited:
+          (widget.originalQuote != null &&
+              widget.originalQuote!.trim() != _quote.text.trim()) ||
+          (widget.existing?.quoteEdited ?? false),
       sortOrder: int.tryParse(_order.text.trim()) ?? 0,
     );
 
@@ -109,7 +132,9 @@ class _TestimonialFormDialogState extends State<TestimonialFormDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isEditing ? 'Edit Testimonial' : 'Add Testimonial',
+                            widget.bannerNote != null
+                                ? 'Review Testimonial'
+                                : (_isEditing ? 'Edit Testimonial' : 'Add Testimonial'),
                             style: AppTextStyles.h3(),
                           ),
                           SizedBox(height: 3.h),
@@ -134,6 +159,19 @@ class _TestimonialFormDialogState extends State<TestimonialFormDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (widget.bannerNote != null)
+                        _Notice(
+                          icon: Iconsax.verify,
+                          text: widget.bannerNote!,
+                          color: AppColors.primary,
+                        )
+                      else if (!_isEditing)
+                        const _Notice(
+                          icon: Iconsax.info_circle,
+                          text:
+                              'Only add words a client actually gave you, with their permission. Clients can also submit their own through an invite link, which is the better route.',
+                          color: AppColors.warning,
+                        ),
                       AdminTwoCol(
                         left: AdminTextField(
                           controller: _name,
@@ -276,7 +314,8 @@ class _TestimonialFormDialogState extends State<TestimonialFormDialog> {
                     SizedBox(width: 10.w),
                     Expanded(
                       child: AdminPrimaryButton(
-                        label: _isEditing ? 'Save Changes' : 'Add Testimonial',
+                        label: widget.submitLabel ??
+                            (_isEditing ? 'Save Changes' : 'Add Testimonial'),
                         loading: _saving,
                         expand: true,
                         onPressed: _submit,
@@ -331,6 +370,40 @@ class _SwitchTile extends StatelessWidget {
             value: value,
             activeThumbColor: AppColors.primary,
             onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Notice extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+  const _Notice({required this.icon, required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 18.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18.sp, color: color),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.small(color: AppColors.textPrimary)
+                  .copyWith(height: 1.5, fontSize: 12.5.sp),
+            ),
           ),
         ],
       ),

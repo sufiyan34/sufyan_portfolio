@@ -81,6 +81,11 @@ class RealtimeDbService {
 
   Future<void> remove(String path) => ref(path).remove();
 
+  /// Atomic multi-path update from the database root. Keys are full paths
+  /// (`'testimonials/abc'`, `'invites/xyz/used'`); either every write lands
+  /// or none do.
+  Future<void> updateMulti(Map<String, Object?> paths) => _root.update(paths);
+
   /// Server-side timestamp placeholder — use for createdAt/updatedAt so the
   /// value is trusted rather than the client clock.
   Object get serverTimestamp => ServerValue.timestamp;

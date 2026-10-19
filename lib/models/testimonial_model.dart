@@ -10,6 +10,13 @@ class TestimonialModel {
   final String avatarUrl;
   final bool featured;
   final bool published;
+
+  /// `client` = submitted by the client through a private invite link,
+  /// `admin` = added manually from the admin panel.
+  final String source;
+
+  /// True when the admin changed the client's wording while approving.
+  final bool quoteEdited;
   final int sortOrder;
   final int createdAt;
   final int updatedAt;
@@ -28,6 +35,8 @@ class TestimonialModel {
     required this.sortOrder,
     required this.createdAt,
     required this.updatedAt,
+    this.source = TestimonialSources.admin,
+    this.quoteEdited = false,
   });
 
   factory TestimonialModel.empty() => const TestimonialModel(
@@ -57,6 +66,8 @@ class TestimonialModel {
     String? avatarUrl,
     bool? featured,
     bool? published,
+    String? source,
+    bool? quoteEdited,
     int? sortOrder,
     int? createdAt,
     int? updatedAt,
@@ -72,6 +83,8 @@ class TestimonialModel {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       featured: featured ?? this.featured,
       published: published ?? this.published,
+      source: source ?? this.source,
+      quoteEdited: quoteEdited ?? this.quoteEdited,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -92,6 +105,10 @@ class TestimonialModel {
       published: map['published'] is bool
           ? map['published'] as bool
           : map['published']?.toString().toLowerCase() != 'false',
+      source: map['source']?.toString() == TestimonialSources.client
+          ? TestimonialSources.client
+          : TestimonialSources.admin,
+      quoteEdited: map['quoteEdited'] == true,
       sortOrder: _toInt(map['sortOrder']),
       createdAt: _toInt(map['createdAt']),
       updatedAt: _toInt(map['updatedAt']),
@@ -108,10 +125,17 @@ class TestimonialModel {
     'avatarUrl': avatarUrl,
     'featured': featured,
     'published': published,
+    'source': source,
+    'quoteEdited': quoteEdited,
     'sortOrder': sortOrder,
     'createdAt': createdAt,
     'updatedAt': updatedAt,
   };
+
+  /// Shown as a "Verified client" badge on the public site: the client
+  /// submitted it themselves and the wording wasn't changed.
+  bool get isVerifiedClient =>
+      source == TestimonialSources.client && !quoteEdited;
 
   /// "CTO · Acme" style subtitle, skipping whichever parts are empty.
   String get roleLine =>
@@ -122,4 +146,10 @@ class TestimonialModel {
     if (value is num) return value.round();
     return int.tryParse(value?.toString() ?? '') ?? fallback;
   }
+}
+
+class TestimonialSources {
+  TestimonialSources._();
+  static const client = 'client';
+  static const admin = 'admin';
 }

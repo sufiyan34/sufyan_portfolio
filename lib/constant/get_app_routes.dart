@@ -10,6 +10,7 @@ import 'package:sufyan_portfolio/controllers/consultation_controller.dart';
 import 'package:sufyan_portfolio/controllers/hire_request_controller.dart';
 import 'package:sufyan_portfolio/splash_screen.dart';
 import 'package:sufyan_portfolio/views/admin/access_denied_screen.dart';
+import 'package:sufyan_portfolio/views/client/leave_review_screen.dart';
 import 'package:sufyan_portfolio/views/client/not_found_screen.dart';
 import 'package:sufyan_portfolio/views/client/privacy_policy_screen.dart';
 import 'package:sufyan_portfolio/views/admin/consultation_management_screen.dart';
@@ -99,6 +100,10 @@ class GetAppRoutes {
     GetPage(
       name: AppRoutes.privacyPolicy,
       page: () => const PrivacyPolicyScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.leaveReview,
+      page: () => const LeaveReviewScreen(),
     ),
     GetPage(name: AppRoutes.notFound, page: () => const NotFoundScreen()),
     GetPage(

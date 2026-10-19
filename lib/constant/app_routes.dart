@@ -41,6 +41,9 @@ class AppRoutes {
 
   static const privacyPolicy = '/privacy-policy';
 
+  /// Private invite link for clients: /leave-a-review?t=<token>
+  static const leaveReview = '/leave-a-review';
+
   static const notFound = '/not-found';
 
   // ============================================================
