@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:sufyan_portfolio/constant/app_colors.dart';
+import 'package:sufyan_portfolio/constant/app_images.dart';
 import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/about_controller.dart';
@@ -298,9 +299,15 @@ class _PortraitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = content.imageUrl.isNotEmpty
-        ? content.imageUrl
-        : fallbackImageUrl;
+    final configuredImageUrl = content.imageUrl.trim();
+    final fallbackUrl = fallbackImageUrl.trim();
+    // Prefer the About image configured in Firebase, then the Home image.
+    // If neither is configured, use the local hero asset that is tracked in Git.
+    final imageUrl = configuredImageUrl.isNotEmpty
+        ? configuredImageUrl
+        : fallbackUrl.isNotEmpty
+        ? fallbackUrl
+        : AppImages.heroImage;
 
     return Container(
           padding: EdgeInsets.all(13.w),
@@ -317,14 +324,26 @@ class _PortraitCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22.r),
                 child: AspectRatio(
                   aspectRatio: .94,
-                  child: imageUrl.isNotEmpty
-                      ? CachedNetworkImage(
+                  child: imageUrl.startsWith('assets/')
+                      ? Image.asset(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            AppImages.heroImage,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _imageFallback(),
+                          ),
+                        )
+                      : CachedNetworkImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
                           placeholder: (_, __) => _imageFallback(),
-                          errorWidget: (_, __, ___) => _imageFallback(),
-                        )
-                      : _imageFallback(),
+                          errorWidget: (_, __, ___) => Image.asset(
+                            AppImages.heroImage,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _imageFallback(),
+                          ),
+                        ),
                 ),
               ),
               SizedBox(height: 14.h),
