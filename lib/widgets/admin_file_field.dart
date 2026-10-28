@@ -6,17 +6,20 @@ import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/services/cloudinary/cloudinary_models.dart';
 import 'package:sufyan_portfolio/utills/cloudinary_registry.dart';
 import 'package:sufyan_portfolio/utills/media_upload_zone.dart';
-import 'package:sufyan_portfolio/widgets/admin_ui.dart';
+import 'package:sufyan_portfolio/widgets/cloudinary_setup_note.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// "Current file + upload zone" field for documents such as a resume PDF.
-/// Writes the uploaded file's URL into [controller]; falls back to a plain URL
-/// field when Cloudinary isn't configured.
+/// Always shows a real upload box (drag & drop, paste, browse) and writes the
+/// uploaded file's URL into [controller]. There is no URL text field.
 class AdminFileField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final String folder;
   final String hint;
+
+  /// File types the upload box accepts (lower-case, no dot).
+  final List<String> allowedExtensions;
 
   const AdminFileField({
     super.key,
@@ -24,6 +27,15 @@ class AdminFileField extends StatefulWidget {
     required this.controller,
     required this.folder,
     this.hint = '',
+    this.allowedExtensions = const [
+      'pdf',
+      'doc',
+      'docx',
+      'odt',
+      'rtf',
+      'txt',
+      'pages',
+    ],
   });
 
   @override
@@ -32,6 +44,14 @@ class AdminFileField extends StatefulWidget {
 
 class _AdminFileFieldState extends State<AdminFileField> {
   final bool _ready = ensureCloudinaryService() != null;
+
+  /// Bumped on Remove so the upload zone drops its stale "uploaded" tile.
+  int _zoneGeneration = 0;
+
+  void _clear() => setState(() {
+    widget.controller.clear();
+    _zoneGeneration++;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -69,36 +89,30 @@ class _AdminFileFieldState extends State<AdminFileField> {
                   child: const Text('Open'),
                 ),
                 TextButton(
-                  onPressed: () => setState(widget.controller.clear),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                  onPressed: _clear,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                  ),
                   child: const Text('Remove'),
                 ),
               ],
             ),
           ),
-        if (_ready)
-          MediaUploadZone(
-            folder: widget.folder,
-            kind: MediaUploadKind.any,
-            multiple: false,
-            maxFiles: 1,
-            maxFileBytes: 10 * 1024 * 1024,
-            tileSize: 88,
-            onUploaded: (CloudinaryUploadResult r) =>
-                setState(() => widget.controller.text = r.secureUrl),
-          )
-        else
-          TextFormField(
-            controller: widget.controller,
-            onChanged: (_) => setState(() {}),
-            style: AppTextStyles.bodyMedium().copyWith(fontSize: 14.sp),
-            decoration: adminInputDecoration(
-              widget.label,
-              hint: widget.hint.isEmpty
-                  ? 'Cloudinary is not configured — paste a file URL'
-                  : widget.hint,
-            ),
-          ),
+        if (!_ready) const CloudinarySetupNote(),
+        MediaUploadZone(
+          key: ValueKey('zone_$_zoneGeneration'),
+          folder: widget.folder,
+          kind: MediaUploadKind.any,
+          allowedExtensions: widget.allowedExtensions,
+          listStyle: true,
+          successHint: 'Uploaded. Click Save to publish it.',
+          multiple: false,
+          maxFiles: 1,
+          maxFileBytes: 10 * 1024 * 1024,
+          tileSize: 88,
+          onUploaded: (CloudinaryUploadResult r) =>
+              setState(() => widget.controller.text = r.secureUrl),
+        ),
       ],
     );
   }

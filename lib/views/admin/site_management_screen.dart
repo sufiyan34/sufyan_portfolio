@@ -41,9 +41,15 @@ class SiteManagementScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Couldn\'t load the site content.', style: AppTextStyles.body()),
+                Text(
+                  'Couldn\'t load the site content.',
+                  style: AppTextStyles.body(),
+                ),
                 SizedBox(height: 12.h),
-                AdminPrimaryButton(label: 'Try again', onPressed: controller.load),
+                AdminPrimaryButton(
+                  label: 'Try again',
+                  onPressed: controller.load,
+                ),
               ],
             ),
           );
@@ -68,7 +74,9 @@ class SiteManagementScreen extends StatelessWidget {
                     unselectedLabelColor: AppColors.textSecondary,
                     indicatorColor: AppColors.primary,
                     dividerColor: Colors.transparent,
-                    labelStyle: AppTextStyles.bodyMedium().copyWith(fontSize: 14.sp),
+                    labelStyle: AppTextStyles.bodyMedium().copyWith(
+                      fontSize: 14.sp,
+                    ),
                     tabs: const [
                       Tab(text: 'Home hero & stats'),
                       Tab(text: 'About page'),
@@ -186,7 +194,14 @@ class _HeroTab extends StatefulWidget {
 }
 
 class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
-  static const _iconKeys = ['calendar', 'briefcase', 'code', 'heart', 'star', 'users'];
+  static const _iconKeys = [
+    'calendar',
+    'briefcase',
+    'code',
+    'heart',
+    'star',
+    'users',
+  ];
 
   final _formKey = GlobalKey<FormState>();
   late final HomeContentModel _home;
@@ -221,7 +236,13 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
     _video = TextEditingController(text: h.heroVideoUrl);
     for (final s in widget.controller.stats) {
       _stats.add(
-        _StatDraft(id: s.id, label: s.label, value: s.value, icon: s.icon, active: s.active),
+        _StatDraft(
+          id: s.id,
+          label: s.label,
+          value: s.value,
+          icon: s.icon,
+          active: s.active,
+        ),
       );
     }
   }
@@ -229,8 +250,16 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
   @override
   void dispose() {
     for (final c in [
-      _eyebrow, _headline, _subHeadline, _description, _primaryText,
-      _primaryRoute, _secondaryText, _secondaryRoute, _image, _video,
+      _eyebrow,
+      _headline,
+      _subHeadline,
+      _description,
+      _primaryText,
+      _primaryRoute,
+      _secondaryText,
+      _secondaryRoute,
+      _image,
+      _video,
     ]) {
       c.dispose();
     }
@@ -264,7 +293,11 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
     for (var i = 0; i < _stats.length; i++) {
       final d = _stats[i];
       if (d.label.text.trim().isEmpty || d.value.text.trim().isEmpty) {
-        adminSnack('Stat ${i + 1} is incomplete', 'Give every stat a label and a value.', error: true);
+        adminSnack(
+          'Stat ${i + 1} is incomplete',
+          'Give every stat a label and a value.',
+          error: true,
+        );
         return;
       }
       cleaned.add(
@@ -328,30 +361,58 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
                 child: Column(
                   children: [
                     AdminTwoCol(
-                      left: AdminTextField(controller: _eyebrow, label: 'Eyebrow', hint: "Hi, I'm"),
-                      right: AdminTextField(controller: _headline, label: 'Headline', required: true),
+                      left: AdminTextField(
+                        controller: _eyebrow,
+                        label: 'Eyebrow',
+                        hint: "Hi, I'm",
+                      ),
+                      right: AdminTextField(
+                        controller: _headline,
+                        label: 'Headline',
+                        required: true,
+                      ),
                     ),
                     _gap,
-                    AdminTextField(controller: _subHeadline, label: 'Sub-headline'),
+                    AdminTextField(
+                      controller: _subHeadline,
+                      label: 'Sub-headline',
+                    ),
                     _gap,
-                    AdminTextField(controller: _description, label: 'Description', maxLines: 4),
+                    AdminTextField(
+                      controller: _description,
+                      label: 'Description',
+                      maxLines: 4,
+                    ),
                   ],
                 ),
               ),
               _sectionGap,
               AdminCard(
                 title: 'Call-to-action buttons',
-                subtitle: 'Routes are in-app paths such as /hire-us or /projects.',
+                subtitle:
+                    'Routes are in-app paths such as /hire-us or /projects.',
                 child: Column(
                   children: [
                     AdminTwoCol(
-                      left: AdminTextField(controller: _primaryText, label: 'Primary button text'),
-                      right: AdminTextField(controller: _primaryRoute, label: 'Primary button route'),
+                      left: AdminTextField(
+                        controller: _primaryText,
+                        label: 'Primary button text',
+                      ),
+                      right: AdminTextField(
+                        controller: _primaryRoute,
+                        label: 'Primary button route',
+                      ),
                     ),
                     _gap,
                     AdminTwoCol(
-                      left: AdminTextField(controller: _secondaryText, label: 'Secondary button text'),
-                      right: AdminTextField(controller: _secondaryRoute, label: 'Secondary button route'),
+                      left: AdminTextField(
+                        controller: _secondaryText,
+                        label: 'Secondary button text',
+                      ),
+                      right: AdminTextField(
+                        controller: _secondaryRoute,
+                        label: 'Secondary button route',
+                      ),
                     ),
                   ],
                 ),
@@ -389,8 +450,13 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
         SizedBox(height: 28.h),
         AdminCard(
           title: 'Hero stats',
-          subtitle: 'The home hero shows the first 4 active stats, in this order.',
-          trailing: AdminOutlineButton(label: 'Add stat', icon: Icons.add_rounded, onPressed: _addStat),
+          subtitle:
+              'The home hero shows the first 4 active stats, in this order.',
+          trailing: AdminOutlineButton(
+            label: 'Add stat',
+            icon: Icons.add_rounded,
+            onPressed: _addStat,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -416,8 +482,16 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
                     child: Column(
                       children: [
                         AdminTwoCol(
-                          left: AdminTextField(controller: _stats[i].label, label: 'Label', hint: 'Projects Completed'),
-                          right: AdminTextField(controller: _stats[i].value, label: 'Value', hint: '15+'),
+                          left: AdminTextField(
+                            controller: _stats[i].label,
+                            label: 'Label',
+                            hint: 'Projects Completed',
+                          ),
+                          right: AdminTextField(
+                            controller: _stats[i].value,
+                            label: 'Value',
+                            hint: '15+',
+                          ),
                         ),
                         SizedBox(height: 10.h),
                         Row(
@@ -425,10 +499,15 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
                             SizedBox(
                               width: 160.w,
                               child: DropdownButtonFormField<String>(
-                                initialValue: _iconKeys.contains(_stats[i].icon) ? _stats[i].icon : 'star',
+                                initialValue: _iconKeys.contains(_stats[i].icon)
+                                    ? _stats[i].icon
+                                    : 'star',
                                 items: [
                                   for (final key in _iconKeys)
-                                    DropdownMenuItem(value: key, child: Text(key)),
+                                    DropdownMenuItem(
+                                      value: key,
+                                      child: Text(key),
+                                    ),
                                 ],
                                 onChanged: (v) => _stats[i].icon = v ?? 'star',
                                 decoration: adminInputDecoration('Icon'),
@@ -439,23 +518,36 @@ class _HeroTabState extends State<_HeroTab> with AutomaticKeepAliveClientMixin {
                             Switch.adaptive(
                               value: _stats[i].active,
                               activeThumbColor: AppColors.primary,
-                              onChanged: (v) => setState(() => _stats[i].active = v),
+                              onChanged: (v) =>
+                                  setState(() => _stats[i].active = v),
                             ),
                             const Spacer(),
                             IconButton(
                               tooltip: 'Move up',
                               onPressed: i == 0 ? null : () => _moveStat(i, -1),
-                              icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                              icon: const Icon(
+                                Icons.arrow_upward_rounded,
+                                size: 18,
+                              ),
                             ),
                             IconButton(
                               tooltip: 'Move down',
-                              onPressed: i == _stats.length - 1 ? null : () => _moveStat(i, 1),
-                              icon: const Icon(Icons.arrow_downward_rounded, size: 18),
+                              onPressed: i == _stats.length - 1
+                                  ? null
+                                  : () => _moveStat(i, 1),
+                              icon: const Icon(
+                                Icons.arrow_downward_rounded,
+                                size: 18,
+                              ),
                             ),
                             IconButton(
                               tooltip: 'Remove',
                               onPressed: () => _removeStat(i),
-                              icon: Icon(Iconsax.trash, size: 18.sp, color: AppColors.danger),
+                              icon: Icon(
+                                Iconsax.trash,
+                                size: 18.sp,
+                                color: AppColors.danger,
+                              ),
                             ),
                           ],
                         ),
@@ -487,10 +579,13 @@ class _JourneyDraft {
   final TextEditingController period;
   final TextEditingController description;
 
-  _JourneyDraft({required String title, required String period, required String description})
-    : title = TextEditingController(text: title),
-      period = TextEditingController(text: period),
-      description = TextEditingController(text: description);
+  _JourneyDraft({
+    required String title,
+    required String period,
+    required String description,
+  }) : title = TextEditingController(text: title),
+       period = TextEditingController(text: period),
+       description = TextEditingController(text: description);
 
   void dispose() {
     title.dispose();
@@ -507,7 +602,8 @@ class _AboutTab extends StatefulWidget {
   State<_AboutTab> createState() => _AboutTabState();
 }
 
-class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin {
+class _AboutTabState extends State<_AboutTab>
+    with AutomaticKeepAliveClientMixin {
   final _formKey = GlobalKey<FormState>();
   late final AboutContentModel _about;
   late final TextEditingController _eyebrow;
@@ -543,15 +639,29 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
     _traits = TextEditingController(text: a.traits.join('\n'));
     _capabilities = TextEditingController(text: a.capabilities.join('\n'));
     for (final j in a.journey) {
-      _journey.add(_JourneyDraft(title: j.title, period: j.period, description: j.description));
+      _journey.add(
+        _JourneyDraft(
+          title: j.title,
+          period: j.period,
+          description: j.description,
+        ),
+      );
     }
   }
 
   @override
   void dispose() {
     for (final c in [
-      _eyebrow, _title, _subtitle, _description, _signature,
-      _availability, _image, _resume, _traits, _capabilities,
+      _eyebrow,
+      _title,
+      _subtitle,
+      _description,
+      _signature,
+      _availability,
+      _image,
+      _resume,
+      _traits,
+      _capabilities,
     ]) {
       c.dispose();
     }
@@ -576,7 +686,11 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
       final d = _journey[i];
       final title = d.title.text.trim();
       if (title.isEmpty) {
-        adminSnack('Journey step ${i + 1} needs a title', 'Fill it in or remove the step.', error: true);
+        adminSnack(
+          'Journey step ${i + 1} needs a title',
+          'Fill it in or remove the step.',
+          error: true,
+        );
         return;
       }
       if (_illegalKeyChars.hasMatch(title)) {
@@ -588,7 +702,11 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
         return;
       }
       if (!seen.add(title.toLowerCase())) {
-        adminSnack('Duplicate journey title', '“$title” is used twice — titles must be unique.', error: true);
+        adminSnack(
+          'Duplicate journey title',
+          '“$title” is used twice — titles must be unique.',
+          error: true,
+        );
         return;
       }
       journey.add(
@@ -649,16 +767,32 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
                 child: Column(
                   children: [
                     AdminTwoCol(
-                      left: AdminTextField(controller: _eyebrow, label: 'Eyebrow', hint: 'ABOUT ME'),
-                      right: AdminTextField(controller: _title, label: 'Title', required: true),
+                      left: AdminTextField(
+                        controller: _eyebrow,
+                        label: 'Eyebrow',
+                        hint: 'ABOUT ME',
+                      ),
+                      right: AdminTextField(
+                        controller: _title,
+                        label: 'Title',
+                        required: true,
+                      ),
                     ),
                     _gap,
                     AdminTextField(controller: _subtitle, label: 'Subtitle'),
                     _gap,
-                    AdminTextField(controller: _description, label: 'About text', maxLines: 6),
+                    AdminTextField(
+                      controller: _description,
+                      label: 'About text',
+                      maxLines: 6,
+                    ),
                     _gap,
                     AdminTwoCol(
-                      left: AdminTextField(controller: _signature, label: 'Signature', hint: 'Sufyan'),
+                      left: AdminTextField(
+                        controller: _signature,
+                        label: 'Signature',
+                        hint: 'Sufyan',
+                      ),
                       right: AdminTextField(
                         controller: _availability,
                         label: 'Availability badge',
@@ -679,11 +813,10 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
               ),
               _sectionGap,
               AdminCard(
-                title: 'Resume (PDF)',
-                subtitle:
-                    'Powers the "Download Resume" button on the About page. Leave empty to hide the button.',
+                title: 'Resume',
+                subtitle: 'Drag & drop, paste or browse to upload (PDF, Word, ODT, RTF, TXT or Pages). Powers the "Download Resume" button on the About page. Leave empty to hide the button.',
                 child: AdminFileField(
-                  label: 'Resume URL',
+                  label: 'Resume',
                   controller: _resume,
                   folder: 'portfolio/site/resume',
                 ),
@@ -694,7 +827,12 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
                 subtitle: 'One item per line.',
                 child: Column(
                   children: [
-                    AdminTextField(controller: _traits, label: 'Traits', maxLines: 5, hint: 'Clean Code\nProblem Solver'),
+                    AdminTextField(
+                      controller: _traits,
+                      label: 'Traits',
+                      maxLines: 5,
+                      hint: 'Clean Code\nProblem Solver',
+                    ),
                     _gap,
                     AdminTextField(
                       controller: _capabilities,
@@ -713,7 +851,9 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
                   label: 'Add step',
                   icon: Icons.add_rounded,
                   onPressed: () => setState(
-                    () => _journey.add(_JourneyDraft(title: '', period: '', description: '')),
+                    () => _journey.add(
+                      _JourneyDraft(title: '', period: '', description: ''),
+                    ),
                   ),
                 ),
                 child: Column(
@@ -721,7 +861,10 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
                     if (_journey.isEmpty)
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('No steps yet.', style: AppTextStyles.body()),
+                        child: Text(
+                          'No steps yet.',
+                          style: AppTextStyles.body(),
+                        ),
                       ),
                     for (var i = 0; i < _journey.length; i++)
                       Padding(
@@ -737,29 +880,54 @@ class _AboutTabState extends State<_AboutTab> with AutomaticKeepAliveClientMixin
                           child: Column(
                             children: [
                               AdminTwoCol(
-                                left: AdminTextField(controller: _journey[i].title, label: 'Title'),
-                                right: AdminTextField(controller: _journey[i].period, label: 'Period', hint: '2024 — Present'),
+                                left: AdminTextField(
+                                  controller: _journey[i].title,
+                                  label: 'Title',
+                                ),
+                                right: AdminTextField(
+                                  controller: _journey[i].period,
+                                  label: 'Period',
+                                  hint: '2024 — Present',
+                                ),
                               ),
                               SizedBox(height: 10.h),
-                              AdminTextField(controller: _journey[i].description, label: 'Description', maxLines: 2),
+                              AdminTextField(
+                                controller: _journey[i].description,
+                                label: 'Description',
+                                maxLines: 2,
+                              ),
                               SizedBox(height: 6.h),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   IconButton(
                                     tooltip: 'Move up',
-                                    onPressed: i == 0 ? null : () => _moveStep(i, -1),
-                                    icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                                    onPressed: i == 0
+                                        ? null
+                                        : () => _moveStep(i, -1),
+                                    icon: const Icon(
+                                      Icons.arrow_upward_rounded,
+                                      size: 18,
+                                    ),
                                   ),
                                   IconButton(
                                     tooltip: 'Move down',
-                                    onPressed: i == _journey.length - 1 ? null : () => _moveStep(i, 1),
-                                    icon: const Icon(Icons.arrow_downward_rounded, size: 18),
+                                    onPressed: i == _journey.length - 1
+                                        ? null
+                                        : () => _moveStep(i, 1),
+                                    icon: const Icon(
+                                      Icons.arrow_downward_rounded,
+                                      size: 18,
+                                    ),
                                   ),
                                   IconButton(
                                     tooltip: 'Remove',
                                     onPressed: () => _removeStep(i),
-                                    icon: Icon(Iconsax.trash, size: 18.sp, color: AppColors.danger),
+                                    icon: Icon(
+                                      Iconsax.trash,
+                                      size: 18.sp,
+                                      color: AppColors.danger,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -797,7 +965,8 @@ class _ContactTab extends StatefulWidget {
   State<_ContactTab> createState() => _ContactTabState();
 }
 
-class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientMixin {
+class _ContactTabState extends State<_ContactTab>
+    with AutomaticKeepAliveClientMixin {
   /// Keys the public Contact page and footer already understand.
   static const _socials = <String, String>{
     'github': 'GitHub',
@@ -848,7 +1017,18 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
 
   @override
   void dispose() {
-    for (final c in [_eyebrow, _title, _subtitle, _email, _phone, _location, _hours, _lat, _lng, _zoom]) {
+    for (final c in [
+      _eyebrow,
+      _title,
+      _subtitle,
+      _email,
+      _phone,
+      _location,
+      _hours,
+      _lat,
+      _lng,
+      _zoom,
+    ]) {
       c.dispose();
     }
     for (final c in _links.values) {
@@ -864,21 +1044,34 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
     final lng = double.tryParse(_lng.text.trim());
     final zoom = double.tryParse(_zoom.text.trim());
     if (lat == null || lat < -90 || lat > 90) {
-      adminSnack('Check the latitude', 'Use a number between -90 and 90, e.g. 31.5204', error: true);
+      adminSnack(
+        'Check the latitude',
+        'Use a number between -90 and 90, e.g. 31.5204',
+        error: true,
+      );
       return;
     }
     if (lng == null || lng < -180 || lng > 180) {
-      adminSnack('Check the longitude', 'Use a number between -180 and 180, e.g. 74.3587', error: true);
+      adminSnack(
+        'Check the longitude',
+        'Use a number between -180 and 180, e.g. 74.3587',
+        error: true,
+      );
       return;
     }
     if (zoom == null || zoom < 3 || zoom > 18) {
-      adminSnack('Check the map zoom', 'Use a number between 3 (world) and 18 (street).', error: true);
+      adminSnack(
+        'Check the map zoom',
+        'Use a number between 3 (world) and 18 (street).',
+        error: true,
+      );
       return;
     }
 
     final links = <String, String>{
       for (final entry in _links.entries)
-        if (entry.value.text.trim().isNotEmpty) entry.key: entry.value.text.trim(),
+        if (entry.value.text.trim().isNotEmpty)
+          entry.key: entry.value.text.trim(),
     };
 
     await widget.controller.saveContact(
@@ -915,11 +1108,23 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
                 child: Column(
                   children: [
                     AdminTwoCol(
-                      left: AdminTextField(controller: _eyebrow, label: 'Eyebrow', hint: 'GET IN TOUCH'),
-                      right: AdminTextField(controller: _title, label: 'Title', required: true),
+                      left: AdminTextField(
+                        controller: _eyebrow,
+                        label: 'Eyebrow',
+                        hint: 'GET IN TOUCH',
+                      ),
+                      right: AdminTextField(
+                        controller: _title,
+                        label: 'Title',
+                        required: true,
+                      ),
                     ),
                     _gap,
-                    AdminTextField(controller: _subtitle, label: 'Subtitle', maxLines: 3),
+                    AdminTextField(
+                      controller: _subtitle,
+                      label: 'Subtitle',
+                      maxLines: 3,
+                    ),
                   ],
                 ),
               ),
@@ -944,8 +1149,14 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
                     ),
                     _gap,
                     AdminTwoCol(
-                      left: AdminTextField(controller: _location, label: 'Location'),
-                      right: AdminTextField(controller: _hours, label: 'Working hours'),
+                      left: AdminTextField(
+                        controller: _location,
+                        label: 'Location',
+                      ),
+                      right: AdminTextField(
+                        controller: _hours,
+                        label: 'Working hours',
+                      ),
                     ),
                   ],
                 ),
@@ -953,8 +1164,7 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
               _sectionGap,
               AdminCard(
                 title: 'Map location',
-                subtitle:
-                    'Shown as an interactive map on the Contact page. In Google Maps, right-click your spot and click the coordinates to copy them.',
+                subtitle: 'Shown as an interactive map on the Contact page. In Google Maps, right-click your spot and click the coordinates to copy them.',
                 child: Column(
                   children: [
                     AdminTwoCol(
@@ -962,13 +1172,19 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
                         controller: _lat,
                         label: 'Latitude',
                         hint: '31.5204',
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
                       ),
                       right: AdminTextField(
                         controller: _lng,
                         label: 'Longitude',
                         hint: '74.3587',
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
                       ),
                     ),
                     _gap,
@@ -976,7 +1192,9 @@ class _ContactTabState extends State<_ContactTab> with AutomaticKeepAliveClientM
                       controller: _zoom,
                       label: 'Zoom (3 = world, 18 = street)',
                       hint: '13',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                   ],
                 ),

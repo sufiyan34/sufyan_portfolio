@@ -1,3 +1,12 @@
+/// Paste your Cloudinary values here if you don't want to pass
+/// `--dart-define` flags on every run. A `--dart-define` value always wins.
+///
+///  - cloud name: Cloudinary dashboard → top-left (e.g. `dxyz123abc`)
+///  - unsigned preset: Settings → Upload → Upload presets → add preset with
+///    "Signing mode: Unsigned" (e.g. `portfolio_unsigned`)
+const String kCloudinaryCloudName = 'dxi3umqzq';
+const String kCloudinaryUnsignedPreset = 'sufyan_portfolio';
+
 class CloudinaryConfig {
   final String cloudName;
   final String unsignedUploadPreset;
@@ -16,8 +25,10 @@ class CloudinaryConfig {
   });
 
   factory CloudinaryConfig.fromEnvironment() {
-    const cloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME');
-    const preset = String.fromEnvironment('CLOUDINARY_UNSIGNED_PRESET');
+    const envCloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME');
+    const envPreset = String.fromEnvironment('CLOUDINARY_UNSIGNED_PRESET');
+    const cloudName = envCloudName != '' ? envCloudName : kCloudinaryCloudName;
+    const preset = envPreset != '' ? envPreset : kCloudinaryUnsignedPreset;
 
     if (cloudName.isEmpty || preset.isEmpty) {
       throw const CloudinaryConfigException(
@@ -33,9 +44,7 @@ class CloudinaryConfig {
   }
 
   Uri uploadUri(String resourceType) {
-    return Uri.parse(
-      '$apiBaseUrl/$cloudName/$resourceType/upload',
-    );
+    return Uri.parse('$apiBaseUrl/$cloudName/$resourceType/upload');
   }
 }
 

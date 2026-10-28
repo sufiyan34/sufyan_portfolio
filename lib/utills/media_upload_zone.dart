@@ -91,6 +91,7 @@ class _UploadItem {
   String? errorMessage;
   CloudinaryUploadResult? result;
   CancelToken? cancelToken;
+  int? bytes;
 
   CloudinaryMediaKind get mediaKind =>
       CloudinaryMediaHelper.kindFromExtension(file.name);
@@ -109,6 +110,9 @@ class MediaUploadZone extends StatefulWidget {
     this.onUploaded,
     this.onRemoved,
     this.tileSize = 96,
+    this.allowedExtensions,
+    this.listStyle = false,
+    this.successHint,
   });
 
   /// Cloudinary folder new uploads are saved under.
@@ -142,12 +146,25 @@ class MediaUploadZone extends StatefulWidget {
 
   final double tileSize;
 
+  /// Optional whitelist of file extensions (lower-case, no dot), e.g.
+  /// `['pdf', 'doc', 'docx']`. Applied to drag & drop, paste and browse.
+  final List<String>? allowedExtensions;
+
+  /// Show each file as a full-width status row (name, size, progress bar,
+  /// result message) instead of a small square tile. Best for documents.
+  final bool listStyle;
+
+  /// Extra line shown on a successfully uploaded row (list style only).
+  final String? successHint;
+
   @override
   State<MediaUploadZone> createState() => _MediaUploadZoneState();
 }
 
 class _MediaUploadZoneState extends State<MediaUploadZone> {
-  late final CloudinaryService _service;
+  /// Null when Cloudinary isn't configured: the zone still renders and takes
+  /// files, but an upload attempt fails with a clear, visible message.
+  CloudinaryService? _service;
   final List<_UploadItem> _items = [];
   bool _dragging = false;
   int _localIdSeed = 0;
@@ -162,7 +179,9 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
   @override
   void initState() {
     super.initState();
-    _service = Get.find<CloudinaryService>();
+    _service = Get.isRegistered<CloudinaryService>()
+        ? Get.find<CloudinaryService>()
+        : null;
     for (final result in widget.initialItems) {
       _items.add(
         _UploadItem(
@@ -207,7 +226,24 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
     };
 
     var accepted = files;
-    if (allowedKind != null) {
+    final allowedExt = widget.allowedExtensions;
+    if (allowedExt != null) {
+      accepted = files.where((f) {
+        final name = f.name.toLowerCase();
+        final dot = name.lastIndexOf('.');
+        return dot >= 0 && allowedExt.contains(name.substring(dot + 1));
+      }).toList();
+      if (accepted.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Unsupported file. Allowed: ${allowedExt.map((e) => e.toUpperCase()).join(', ')}.',
+            ),
+          ),
+        );
+        return;
+      }
+    } else if (allowedKind != null) {
       accepted = files
           .where(
             (f) =>
@@ -240,6 +276,12 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
     for (final file in accepted) {
       final item = _UploadItem(localId: _nextLocalId(), file: file);
       setState(() => _items.add(item));
+      file
+          .length()
+          .then((v) {
+            if (mounted) setState(() => item.bytes = v);
+          })
+          .catchError((_) {});
       _startUpload(item);
     }
   }
@@ -250,6 +292,14 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
     item.cancelToken = cancelToken;
 
     try {
+      final service = _service;
+      if (service == null) {
+        throw const CloudinaryException(
+          message:
+              'Upload is not set up yet: add your Cloudinary cloud name '
+              'and unsigned preset (see cloudinary_config.dart).',
+        );
+      }
       if (widget.maxFileBytes != null) {
         await CloudinaryMediaHelper.validateSize(
           item.file,
@@ -258,7 +308,7 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
       }
 
       final result = await switch (kind) {
-        CloudinaryMediaKind.video => _service.uploadVideo(
+        CloudinaryMediaKind.video => service.uploadVideo(
           item.file,
           options: CloudinaryUploadOptions(
             folder: widget.folder,
@@ -268,7 +318,7 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
           onSendProgress: (sent, total) => _updateProgress(item, sent, total),
           cancelToken: cancelToken,
         ),
-        CloudinaryMediaKind.image => _service.uploadImage(
+        CloudinaryMediaKind.image => service.uploadImage(
           item.file,
           options: CloudinaryUploadOptions(
             folder: widget.folder,
@@ -277,7 +327,7 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
           onSendProgress: (sent, total) => _updateProgress(item, sent, total),
           cancelToken: cancelToken,
         ),
-        CloudinaryMediaKind.model3d => _service.upload3dModel(
+        CloudinaryMediaKind.model3d => service.upload3dModel(
           item.file,
           options: CloudinaryUploadOptions(
             folder: widget.folder,
@@ -287,7 +337,7 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
           onSendProgress: (sent, total) => _updateProgress(item, sent, total),
           cancelToken: cancelToken,
         ),
-        CloudinaryMediaKind.file => _service.upload(
+        CloudinaryMediaKind.file => service.upload(
           item.file,
           kind: CloudinaryMediaKind.file,
           options: CloudinaryUploadOptions(
@@ -353,6 +403,15 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
   // ==========================================================
 
   Future<void> _browse() async {
+    final exts = widget.allowedExtensions;
+    if (exts != null) {
+      final files = await CloudinaryFilePicker.pickByExtensions(
+        exts,
+        multiple: widget.multiple,
+      );
+      await _addFiles(files);
+      return;
+    }
     switch (widget.kind) {
       case MediaUploadKind.image:
         final files = await CloudinaryFilePicker.pickImages(
@@ -377,6 +436,19 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
   Future<void> _pasteFromClipboard() async {
     if (widget.kind == MediaUploadKind.video) return; // rarely usefuls
 
+    // A file copied in Explorer / Finder (desktop only).
+    if (!kIsWeb) {
+      try {
+        final paths = await Pasteboard.files();
+        if (paths.isNotEmpty) {
+          await _addFiles([for (final path in paths) XFile(path)]);
+          return;
+        }
+      } catch (_) {
+        // Fall through to the image check below.
+      }
+    }
+
     final bytes = await Pasteboard.image;
 
     if (bytes != null && bytes.isNotEmpty) {
@@ -391,7 +463,13 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No image found on the clipboard.')),
+        SnackBar(
+          content: Text(
+            widget.allowedExtensions != null
+                ? 'No file found on the clipboard. Copy a file first, or drag it in / use browse.'
+                : 'No image found on the clipboard.',
+          ),
+        ),
       );
     }
   }
@@ -406,14 +484,29 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (canAddMore) _buildDropzone(),
+        // A single-file zone always stays visible: dropping a new file replaces
+        // the current one (see _addFiles), so it must never disappear at 1/1.
+        if (canAddMore || !widget.multiple) _buildDropzone(),
         if (_items.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [for (final item in _items) _buildTile(item)],
-          ),
+          if (widget.listStyle)
+            Column(children: [for (final item in _items) _buildRow(item)])
+          else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [for (final item in _items) _buildTile(item)],
+            ),
+          if (!widget.listStyle)
+            for (final item in _items)
+              if (item.status == _ItemStatus.failed)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${item.file.name}: ${item.errorMessage ?? 'Upload failed.'}',
+                    style: AdminText.body(12, color: AdminColors.danger),
+                  ),
+                ),
         ],
       ],
     );
@@ -462,9 +555,28 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${_items.length}/${widget.maxFiles} added',
+                  widget.multiple
+                      ? '${_items.length}/${widget.maxFiles} added'
+                      : (_items.isEmpty
+                            ? 'One file'
+                            : 'Upload another to replace'),
                   style: AdminText.body(11, color: AdminColors.muted),
                 ),
+                if (widget.allowedExtensions != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Accepted: ${widget.allowedExtensions!.map((e) => e.toUpperCase()).join(', ')}',
+                    style: AdminText.body(11, color: AdminColors.muted),
+                  ),
+                ],
+                if (widget.kind != MediaUploadKind.video) ...[
+                  const SizedBox(height: 6),
+                  TextButton.icon(
+                    onPressed: _pasteFromClipboard,
+                    icon: const Icon(Icons.content_paste_rounded, size: 16),
+                    label: const Text('Paste from clipboard'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -490,6 +602,105 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
         ? 'Drag & drop, paste (Ctrl/Cmd+V), or '
         : 'Paste (Ctrl/Cmd+V) or ';
     return '$action tap to browse';
+  }
+
+  String _formatBytes(int? b) {
+    if (b == null) return '';
+    if (b < 1024) return '$b B';
+    if (b < 1024 * 1024) return '${(b / 1024).toStringAsFixed(0)} KB';
+    return '${(b / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  /// Full-width status row: file name + size, a clear message for each state
+  /// (uploading / uploaded / failed), a progress bar, and retry / remove.
+  Widget _buildRow(_UploadItem item) {
+    final uploading = item.status == _ItemStatus.uploading;
+    final failed = item.status == _ItemStatus.failed;
+    final done = item.status == _ItemStatus.success;
+
+    final accent = failed
+        ? AdminColors.danger
+        : done
+        ? AdminColors.success
+        : AdminColors.brassDark;
+
+    final statusText = uploading
+        ? 'Uploading… ${(item.progress * 100).round()}%'
+        : failed
+        ? (item.errorMessage ?? 'Upload failed.')
+        : (widget.successHint ?? 'Uploaded successfully');
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: failed ? AdminColors.dangerTint : AdminColors.canvas,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: failed ? AdminColors.danger : AdminColors.line,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            failed
+                ? Icons.error_outline_rounded
+                : done
+                ? Icons.check_circle_rounded
+                : Icons.insert_drive_file_outlined,
+            color: accent,
+            size: 24,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _formatBytes(item.bytes).isEmpty
+                      ? item.file.name
+                      : '${item.file.name}  ·  ${_formatBytes(item.bytes)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AdminText.body(
+                    13,
+                    weight: FontWeight.w600,
+                    color: AdminColors.inkSoft,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(statusText, style: AdminText.body(12, color: accent)),
+                if (uploading) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: item.progress > 0 ? item.progress : null,
+                      minHeight: 6,
+                      color: AdminColors.brass,
+                      backgroundColor: AdminColors.line,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (failed)
+            IconButton(
+              tooltip: 'Retry',
+              onPressed: () => _retry(item),
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+            ),
+          IconButton(
+            tooltip: uploading ? 'Cancel' : 'Remove',
+            onPressed: () => _removeItem(item),
+            icon: const Icon(Icons.close_rounded, size: 20),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTile(_UploadItem item) {
@@ -630,10 +841,11 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
     // (f_auto,q_auto), never the raw uploaded bytes.
     if (item.status == _ItemStatus.success && item.result != null) {
       final result = item.result!;
+      final service = _service;
 
-      if (kind == CloudinaryMediaKind.image) {
+      if (service != null && kind == CloudinaryMediaKind.image) {
         return CachedNetworkImage(
-          imageUrl: _service.imageUrl(
+          imageUrl: service.imageUrl(
             result.publicId,
             width: (widget.tileSize * 2).round(),
             height: (widget.tileSize * 2).round(),
@@ -645,12 +857,12 @@ class _MediaUploadZoneState extends State<MediaUploadZone> {
         );
       }
 
-      if (kind == CloudinaryMediaKind.video) {
+      if (service != null && kind == CloudinaryMediaKind.video) {
         return Stack(
           fit: StackFit.expand,
           children: [
             CachedNetworkImage(
-              imageUrl: _service.videoThumbnailUrl(
+              imageUrl: service.videoThumbnailUrl(
                 result.publicId,
                 width: (widget.tileSize * 2).round(),
                 height: (widget.tileSize * 2).round(),

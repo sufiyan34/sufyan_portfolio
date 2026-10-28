@@ -78,6 +78,26 @@ class CloudinaryFilePicker {
   }
 
   // ==========================================================
+  // SPECIFIC EXTENSIONS (e.g. resume: pdf / doc / docx)
+  // ==========================================================
+
+  static Future<List<XFile>> pickByExtensions(
+    List<String> extensions, {
+    bool multiple = true,
+  }) async {
+    final files = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: extensions,
+    );
+
+    if (!multiple && files.isNotEmpty) {
+      return [files.first.xFile];
+    }
+
+    return files.map((file) => file.xFile).toList();
+  }
+
+  // ==========================================================
   // MEDIA TYPE
   // ==========================================================
 
