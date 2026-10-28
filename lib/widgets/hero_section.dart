@@ -12,6 +12,7 @@ import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/controllers/home_controller.dart';
 import 'package:sufyan_portfolio/models/home_content_model.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sufyan_portfolio/constant/app_images.dart';
 
 // Brand colours used for the floating technology icons.
 const Color _flutterBlue = Color(0xFF027DFD);
@@ -680,7 +681,7 @@ class _HeroVisual extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final desktop = width >= 1100;
     final imageHeight = desktop ? 565.h : (width >= 760 ? 480.h : 400.h);
-
+    final imageSource = imageUrl.trim();
     const borderWidth = 5.0;
     final big = 64.r;
     final small = 10.r;
@@ -735,17 +736,26 @@ class _HeroVisual extends StatelessWidget {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          if (imageUrl.isNotEmpty)
+                          if (imageSource.isEmpty ||
+                              imageSource.startsWith('assets/'))
+                            Image.asset(
+                              imageSource.isEmpty
+                                  ? AppImages.heroImage
+                                  : imageSource,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
+                              errorBuilder: (_, __, ___) =>
+                                  const _HeroFallback(),
+                            )
+                          else
                             CachedNetworkImage(
-                              imageUrl: imageUrl,
+                              imageUrl: imageSource,
                               fit: BoxFit.cover,
                               alignment: Alignment.topCenter,
                               placeholder: (_, __) => const _HeroFallback(),
                               errorWidget: (_, __, ___) =>
                                   const _HeroFallback(),
-                            )
-                          else
-                            const _HeroFallback(),
+                            ),
                           DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
