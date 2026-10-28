@@ -22,6 +22,10 @@ const Color _stripePurple = Color(0xFF635BFF);
 const Color _githubInk = Color(0xFF24292F);
 const Color _ink = Color(0xFF111413);
 
+/// Body-copy colour: much darker than the default grey so the text reads
+/// clearly over the dotted background.
+const Color _bodyInk = Color(0xFF26302D);
+
 class HeroSection extends StatelessWidget {
   const HeroSection({super.key});
 
@@ -178,8 +182,8 @@ class _DesktopHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(
-          height: 640.h,
+        ConstrainedBox(
+          constraints: BoxConstraints(minHeight: 640.h),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -356,13 +360,10 @@ class _HeroCopy extends StatelessWidget {
 
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: desktop ? 560.w : 640.w),
-          child: Text(
-            data.description,
+          child: _ExpandableDescription(
+            text: data.description.trim(),
+            desktop: desktop,
             textAlign: textAlign,
-            style: AppTextStyles.body().copyWith(
-              fontSize: desktop ? 14.6.sp : 14.sp,
-              height: 1.7,
-            ),
           ),
         ).animate().fadeIn(delay: 260.ms, duration: 400.ms),
         SizedBox(height: 18.h),
@@ -433,6 +434,271 @@ class _HeroCopy extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Description: clamped to 10 lines, with a "Read all" button -> full popup
+// ---------------------------------------------------------------------------
+
+const int _descriptionMaxLines = 10;
+
+class _ExpandableDescription extends StatelessWidget {
+  final String text;
+  final bool desktop;
+  final TextAlign textAlign;
+
+  const _ExpandableDescription({
+    required this.text,
+    required this.desktop,
+    required this.textAlign,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppTextStyles.body(color: _bodyInk).copyWith(
+      fontSize: desktop ? 15.sp : 14.5.sp,
+      height: 1.75,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.1,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Measure the text so the button only appears when it is really cut.
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: TextDirection.ltr,
+          textScaler: MediaQuery.textScalerOf(context),
+          maxLines: _descriptionMaxLines,
+        )..layout(maxWidth: constraints.maxWidth);
+        final truncated = painter.didExceedMaxLines;
+
+        return Column(
+          crossAxisAlignment: desktop
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              textAlign: textAlign,
+              maxLines: _descriptionMaxLines,
+              overflow: TextOverflow.ellipsis,
+              style: style,
+            ),
+            if (truncated) ...[
+              SizedBox(height: 12.h),
+              _ReadAllButton(onTap: () => _showFullDescription(context, text)),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ReadAllButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _ReadAllButton({required this.onTap});
+
+  @override
+  State<_ReadAllButton> createState() => _ReadAllButtonState();
+}
+
+class _ReadAllButtonState extends State<_ReadAllButton> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = _hover ? AppColors.textOnPrimary : AppColors.primary;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(0, _hover ? -2 : 0, 0),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color: _hover ? AppColors.primary : AppColors.surface,
+            border: Border.all(color: AppColors.primary, width: 1.8),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(14.r),
+              bottomRight: Radius.circular(14.r),
+              topRight: Radius.circular(4.r),
+              bottomLeft: Radius.circular(4.r),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(
+                  alpha: _hover ? 0.28 : 0.14,
+                ),
+                blurRadius: _hover ? 16 : 8,
+                offset: Offset(0, _hover ? 7 : 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Read all',
+                style: AppTextStyles.bodyMedium(color: fg)
+                    .copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800),
+              ),
+              SizedBox(width: 8.w),
+              Icon(
+                Icons.open_in_full_rounded,
+                size: 14.sp,
+                color: _hover ? AppColors.accentGold : AppColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showFullDescription(BuildContext context, String text) {
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.6),
+    builder: (_) => _DescriptionDialog(text: text),
+  );
+}
+
+class _DescriptionDialog extends StatefulWidget {
+  final String text;
+  const _DescriptionDialog({required this.text});
+
+  @override
+  State<_DescriptionDialog> createState() => _DescriptionDialogState();
+}
+
+class _DescriptionDialogState extends State<_DescriptionDialog> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.84;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 24.h),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 760, maxHeight: maxHeight),
+        child:
+            Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(32.r),
+                      bottomRight: Radius.circular(32.r),
+                      topRight: Radius.circular(8.r),
+                      bottomLeft: Radius.circular(8.r),
+                    ),
+                    border: Border.all(color: AppColors.accentGold, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        blurRadius: 40,
+                        offset: const Offset(0, 18),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(26.w, 20.h, 12.w, 14.h),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4.w,
+                              height: 26.h,
+                              decoration: BoxDecoration(
+                                color: AppColors.accentGold,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Text(
+                                'About me',
+                                style: AppTextStyles.h3(
+                                  color: AppColors.textPrimary,
+                                ).copyWith(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Close',
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: Icon(
+                                Icons.close_rounded,
+                                size: 24.sp,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(
+                        height: 1,
+                        thickness: 1.2,
+                        color: AppColors.border,
+                      ),
+                      Flexible(
+                        child: Scrollbar(
+                          controller: _scroll,
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: _scroll,
+                            padding: EdgeInsets.fromLTRB(
+                              26.w,
+                              20.h,
+                              26.w,
+                              26.h,
+                            ),
+                            child: SelectableText(
+                              widget.text,
+                              style: AppTextStyles.body(color: _bodyInk)
+                                  .copyWith(
+                                    fontSize: 15.5.sp,
+                                    height: 1.8,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.1,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                .animate()
+                .fadeIn(duration: 220.ms)
+                .scale(
+                  begin: const Offset(0.95, 0.95),
+                  end: const Offset(1, 1),
+                  duration: 260.ms,
+                  curve: Curves.easeOutCubic,
+                ),
+      ),
+    );
+  }
+}
+
 class _SkillChip extends StatelessWidget {
   final String label;
   final Color color;
@@ -486,8 +752,8 @@ class _Fact extends StatelessWidget {
         SizedBox(width: 6.w),
         Text(
           label,
-          style: AppTextStyles.small(color: AppColors.textSecondary)
-              .copyWith(fontSize: 11.8.sp, fontWeight: FontWeight.w700),
+          style: AppTextStyles.small(color: _bodyInk)
+              .copyWith(fontSize: 12.sp, fontWeight: FontWeight.w700),
         ),
       ],
     );
