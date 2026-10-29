@@ -13,6 +13,8 @@ class HireRequestController extends GetxController {
   final _serviceRepo = ServiceRepository.instance;
   final _packageRepo = PackageRepository.instance;
 
+  /// Each Hire Me page creates its own controller (see HireUsScreen), so this
+  /// key is never shared between two pages.
   final formKey = GlobalKey<FormState>();
 
   final nameController = TextEditingController();
@@ -87,7 +89,7 @@ class HireRequestController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _readArguments();
+    applyRouteSelection();
     loadOptions();
   }
 
@@ -97,25 +99,38 @@ class HireRequestController extends GetxController {
 
   void clearPackage() => selectedPackageId.value = '';
 
-  void _readArguments() {
-    final raw = Get.arguments;
+  /// Reads the package / service chosen on the previous page (route arguments
+  /// or the `?packageId=` / `?serviceId=` query) and selects it. Runs once from
+  /// [onInit], i.e. before the page is first built.
+  void applyRouteSelection({
+    Object? arguments,
+    Map<String, String>? parameters,
+  }) {
+    final raw = arguments ?? Get.arguments;
+    var packageId = '';
+    var serviceId = '';
 
     if (raw is Map) {
-      selectedPackageId.value = raw['packageId']?.toString() ?? '';
-      selectedServiceId.value = raw['serviceId']?.toString() ?? '';
+      packageId = raw['packageId']?.toString().trim() ?? '';
+      serviceId = raw['serviceId']?.toString().trim() ?? '';
     } else if (raw is String && raw.trim().isNotEmpty) {
-      selectedPackageId.value = raw.trim();
+      packageId = raw.trim();
     }
 
     // Fallback for page refresh / shared links: /hire-us?packageId=abc
     // (Get.arguments is lost on a browser refresh, the query string is not).
-    final params = Get.parameters;
-    if (selectedPackageId.value.isEmpty) {
-      selectedPackageId.value = params['packageId']?.trim() ?? '';
-    }
-    if (selectedServiceId.value.isEmpty) {
-      selectedServiceId.value = params['serviceId']?.trim() ?? '';
-    }
+    final params = parameters ?? Get.parameters;
+    if (packageId.isEmpty) packageId = params['packageId']?.trim() ?? '';
+    if (serviceId.isEmpty) serviceId = params['serviceId']?.trim() ?? '';
+
+    if (packageId.isEmpty && serviceId.isEmpty) return;
+
+    selectedPackageId.value = packageId;
+    selectedServiceId.value = serviceId;
+
+    // If the lists are already loaded, drop ids that no longer exist.
+    // While loading, loadOptions() normalizes them when it finishes.
+    if (!isLoadingOptions.value) _normalizeSelections();
   }
 
   Future<void> loadOptions() async {

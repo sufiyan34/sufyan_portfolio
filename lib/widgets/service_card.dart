@@ -2,7 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:sufyan_portfolio/constant/app_colors.dart';
+import 'package:sufyan_portfolio/constant/app_routes.dart';
 import 'package:sufyan_portfolio/constant/app_text_styles.dart';
 import 'package:sufyan_portfolio/models/service_model.dart';
 import 'package:sufyan_portfolio/widgets/service_icon.dart';
@@ -143,6 +145,46 @@ class _ServiceCardState extends State<ServiceCard>
     setState(() => _hovered = value);
     if (value) _shimmer.forward(from: 0);
     _syncFlip();
+  }
+
+  void _chooseService() {
+    final service = widget.service;
+    Get.toNamed(
+      // The id is also in the URL so the selection survives a page refresh.
+      '${AppRoutes.hireUs}?serviceId=${Uri.encodeComponent(service.id)}',
+      arguments: {'serviceId': service.id, 'serviceTitle': service.title},
+    );
+  }
+
+  Widget _cta(_Palette palette) {
+    return SizedBox(
+      height: 44.h,
+      child: ElevatedButton(
+        onPressed: _chooseService,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: palette.accent,
+          foregroundColor: palette.onAccent,
+          elevation: 0,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(18.r),
+              bottomRight: Radius.circular(18.r),
+              topRight: Radius.circular(5.r),
+              bottomLeft: Radius.circular(5.r),
+            ),
+          ),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'Hire me for this',
+            style: AppTextStyles.bodyMedium(color: palette.onAccent)
+                .copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800),
+          ),
+        ),
+      ),
+    );
   }
 
   void _togglePinned() {
@@ -558,18 +600,21 @@ class _ServiceCardState extends State<ServiceCard>
             ),
           ),
         ),
-        if (_pinned && !_hovered) ...[
-          SizedBox(height: 8.h),
-          Align(
-            alignment: Alignment.centerRight,
-            child: _FlipHint(
-              palette: palette,
-              icon: Icons.arrow_back_rounded,
-              label: 'Back',
-              onTap: _togglePinned,
-            ),
-          ),
-        ],
+        SizedBox(height: 10.h),
+        Row(
+          children: [
+            if (_pinned && !_hovered) ...[
+              _FlipHint(
+                palette: palette,
+                icon: Icons.arrow_back_rounded,
+                label: 'Back',
+                onTap: _togglePinned,
+              ),
+              SizedBox(width: 10.w),
+            ],
+            Expanded(child: _cta(palette)),
+          ],
+        ),
       ],
     );
   }

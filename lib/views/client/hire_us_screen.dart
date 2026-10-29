@@ -10,12 +10,38 @@ import 'package:sufyan_portfolio/controllers/hire_request_controller.dart';
 import 'package:sufyan_portfolio/models/package_model.dart';
 import 'package:sufyan_portfolio/widgets/public_navbar.dart';
 
-class HireUsScreen extends StatelessWidget {
+class HireUsScreen extends StatefulWidget {
   const HireUsScreen({super.key});
 
   @override
+  State<HireUsScreen> createState() => _HireUsScreenState();
+}
+
+class _HireUsScreenState extends State<HireUsScreen> {
+  // Every Hire Me page gets its OWN controller. Sharing one controller between
+  // two stacked Hire Me pages (Hire Me -> Services -> Hire Me) made the new page
+  // change values the old page was still listening to, which throws
+  // "setState() or markNeedsBuild() called during build".
+  late final String _tag;
+  late final HireRequestController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _tag =
+        'hire-${identityHashCode(this)}-${DateTime.now().microsecondsSinceEpoch}';
+    // onInit() reads the package / service passed by the previous page.
+    controller = Get.put(HireRequestController(), tag: _tag);
+  }
+
+  @override
+  void dispose() {
+    Get.delete<HireRequestController>(tag: _tag, force: true);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.find<HireRequestController>();
     final width = MediaQuery.sizeOf(context).width;
     final desktop = width >= 1100;
 
@@ -645,6 +671,7 @@ class _ResponsiveDropdown extends StatelessWidget {
           ),
           SizedBox(height: 7.h),
           DropdownButtonFormField<String>(
+            key: ValueKey('$label-$current-${items.length}'),
             value: current,
             isExpanded: true,
             onChanged: enabled && items.isNotEmpty
